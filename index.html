@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="theme-color" content="#16213e">
-    <title>Greek Grid GPS Pro v6 - Τοπογραφικό Εργαλείο</title>
+    <title>Greek Grid GPS Pro v8 - Τοπογραφικό Εργαλείο</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -50,11 +53,16 @@
             gap: 10px;
             width: 100%;
             margin: 13px 0 9px;
+            padding: 2px 0;
             color: #edf3ff;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
             font-size: 14px;
             font-weight: 900;
             letter-spacing: 0.9px;
             text-transform: uppercase;
+            cursor: pointer;
         }
         .control-section-title::before,
         .control-section-title::after {
@@ -62,6 +70,38 @@
             flex: 1;
             height: 2px;
             background: #52658f;
+            transition: background 0.2s;
+        }
+        .control-section-title:hover::before,
+        .control-section-title:hover::after,
+        .control-section-title.open::before,
+        .control-section-title.open::after {
+            background: #8ca4d6;
+        }
+        .section-title-text {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+        .section-arrow {
+            display: inline-block;
+            font-size: 18px;
+            line-height: 1;
+            transform: rotate(-90deg);
+            transition: transform 0.2s ease;
+        }
+        .control-section-title.open .section-arrow {
+            transform: rotate(0deg);
+        }
+        .collapsible-content[hidden] { display: none !important; }
+        .collapsible-content {
+            animation: sectionReveal 0.18s ease-out;
+        }
+        @keyframes sectionReveal {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         button {
             border: none;
@@ -578,26 +618,34 @@
             <button class="control-button btn-add" onclick="addPoint()" id="addBtn" disabled><span class="button-icon">➕</span><span>Προσθήκη σημείου</span></button>
         </div>
 
-        <div class="control-section-title"><span>Εισαγωγή</span></div>
-        <div class="control-row" aria-label="Λειτουργίες εισαγωγής">
-            <button class="control-button btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn"><span class="button-icon triangle-icon">△</span><span>Τριγωνομετρικά</span></button>
-            <button class="control-button btn-upload" onclick="document.getElementById('csvUpload').click()"><span class="button-icon">📤</span><span>Φόρτωση CSV</span></button>
-            <button class="control-button btn-map" onclick="openMapMenu()" id="mapBtn"><span class="button-icon">🗺️</span><span id="mapBtnLabel">Επιλογή χάρτη</span></button>
-            <input type="file" id="csvUpload" accept=".csv,text/csv" hidden onchange="loadCustomRefPoints(event)">
-        </div>
-        <div class="control-row secondary-import-row" aria-label="Εισαγωγή πολυγώνων">
-            <button class="control-button btn-import-kmz" onclick="document.getElementById('kmzUpload').click()"><span class="button-icon">🗂️</span><span>Πολύγωνα KMZ</span></button>
-            <button class="control-button btn-import-shp" onclick="document.getElementById('shpUpload').click()"><span class="button-icon">🧩</span><span>Πολύγωνα SHP</span></button>
-            <button class="control-button btn-import-clear" onclick="clearImportedPolygons()" id="clearImportsBtn" disabled><span class="button-icon">✖️</span><span>Αφαίρεση πολυγώνων</span></button>
-            <input type="file" id="kmzUpload" accept=".kmz,application/vnd.google-earth.kmz,application/zip" hidden onchange="loadKmzPolygons(event)">
-            <input type="file" id="shpUpload" accept=".zip,.shp,.shx,.dbf,.prj,.cpg,application/zip" multiple hidden onchange="loadShapefilePolygons(event)">
+        <button type="button" class="control-section-title" id="importSectionToggle" aria-expanded="false" aria-controls="importSection" onclick="toggleControlSection('importSection', this)">
+            <span class="section-title-text">Εισαγωγή <span class="section-arrow" aria-hidden="true">▼</span></span>
+        </button>
+        <div id="importSection" class="collapsible-content" hidden>
+            <div class="control-row" aria-label="Λειτουργίες εισαγωγής">
+                <button class="control-button btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn"><span class="button-icon triangle-icon">△</span><span>Τριγωνομετρικά</span></button>
+                <button class="control-button btn-upload" onclick="document.getElementById('csvUpload').click()"><span class="button-icon">📤</span><span>Φόρτωση CSV</span></button>
+                <button class="control-button btn-map" onclick="openMapMenu()" id="mapBtn"><span class="button-icon">🗺️</span><span id="mapBtnLabel">Επιλογή χάρτη</span></button>
+                <input type="file" id="csvUpload" accept=".csv,text/csv" hidden onchange="loadCustomRefPoints(event)">
+            </div>
+            <div class="control-row secondary-import-row" aria-label="Εισαγωγή πολυγώνων">
+                <button class="control-button btn-import-kmz" onclick="document.getElementById('kmzUpload').click()"><span class="button-icon">🗂️</span><span>Πολύγωνα KMZ</span></button>
+                <button class="control-button btn-import-shp" onclick="document.getElementById('shpUpload').click()"><span class="button-icon">🧩</span><span>Πολύγωνα SHP</span></button>
+                <button class="control-button btn-import-clear" onclick="clearImportedPolygons()" id="clearImportsBtn" disabled><span class="button-icon">✖️</span><span>Αφαίρεση πολυγώνων</span></button>
+                <input type="file" id="kmzUpload" accept=".kmz,application/vnd.google-earth.kmz,application/zip" hidden onchange="loadKmzPolygons(event)">
+                <input type="file" id="shpUpload" accept=".zip,.shp,.shx,.dbf,.prj,.cpg,application/zip" multiple hidden onchange="loadShapefilePolygons(event)">
+            </div>
         </div>
 
-        <div class="control-section-title"><span>Εξαγωγή</span></div>
-        <div class="control-row" aria-label="Λειτουργίες εξαγωγής">
-            <button class="control-button btn-dxf" onclick="exportDXF()"><span class="button-icon">💾</span><span>Εξαγωγή DXF</span></button>
-            <button class="control-button btn-kmz" onclick="exportKMZ()"><span class="button-icon">🌍</span><span>Εξαγωγή KMZ</span></button>
-            <button class="control-button btn-csv" onclick="exportCSV()"><span class="button-icon">📊</span><span>Εξαγωγή CSV</span></button>
+        <button type="button" class="control-section-title" id="exportSectionToggle" aria-expanded="false" aria-controls="exportSection" onclick="toggleControlSection('exportSection', this)">
+            <span class="section-title-text">Εξαγωγή <span class="section-arrow" aria-hidden="true">▼</span></span>
+        </button>
+        <div id="exportSection" class="collapsible-content" hidden>
+            <div class="control-row" aria-label="Λειτουργίες εξαγωγής">
+                <button class="control-button btn-dxf" onclick="exportDXF()"><span class="button-icon">💾</span><span>Εξαγωγή DXF</span></button>
+                <button class="control-button btn-kmz" onclick="exportKMZ()"><span class="button-icon">🌍</span><span>Εξαγωγή KMZ</span></button>
+                <button class="control-button btn-csv" onclick="exportCSV()"><span class="button-icon">📊</span><span>Εξαγωγή CSV</span></button>
+            </div>
         </div>
 
         <div class="clear-row" aria-label="Καθαρισμός">
@@ -677,7 +725,7 @@
             <div class="layer-section">
                 <div class="layer-section-title">ΔΕΙΚΤΕΣ SENTINEL‑2</div>
                 <div class="layer-option-list">
-                    <label class="layer-option"><input type="checkbox" data-layer-key="ndvi" onchange="toggleThematicLayer('ndvi', this.checked)"><span class="layer-option-label">NDVI<span class="layer-option-note">Sentinel‑2 NDVI 2021, 10 m</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="ndvi" onchange="toggleThematicLayer('ndvi', this.checked)"><span class="layer-option-label">NDVI<span class="layer-option-note">Sentinel‑2 NDVI 2021, 10 m</span></span><span class="layer-badge live">2021</span></label>
                     <label class="layer-option"><input type="checkbox" data-layer-key="ndmi" onchange="toggleThematicLayer('ndmi', this.checked)"><span class="layer-option-label">NDMI<span class="layer-option-note">Υγρασία βλάστησης — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
                     <label class="layer-option"><input type="checkbox" data-layer-key="ndwi" onchange="toggleThematicLayer('ndwi', this.checked)"><span class="layer-option-label">NDWI<span class="layer-option-note">Νερό — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
                     <label class="layer-option"><input type="checkbox" data-layer-key="nbr" onchange="toggleThematicLayer('nbr', this.checked)"><span class="layer-option-label">NBR<span class="layer-option-note">Καμένες εκτάσεις — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
@@ -1065,6 +1113,42 @@
             }
         }
 
+        function toggleControlSection(sectionId, button) {
+            const section = document.getElementById(sectionId);
+            if (!section || !button) return;
+
+            const shouldOpen = section.hidden;
+            section.hidden = !shouldOpen;
+            button.classList.toggle("open", shouldOpen);
+            button.setAttribute("aria-expanded", String(shouldOpen));
+
+            try {
+                localStorage.setItem(`gpsControlSection:${sectionId}`, shouldOpen ? "open" : "closed");
+            } catch (error) {
+                console.warn("Δεν αποθηκεύτηκε η κατάσταση της πτυσσόμενης ενότητας:", error);
+            }
+        }
+
+        function restoreControlSections() {
+            [
+                ["importSection", "importSectionToggle"],
+                ["exportSection", "exportSectionToggle"]
+            ].forEach(([sectionId, buttonId]) => {
+                const section = document.getElementById(sectionId);
+                const button = document.getElementById(buttonId);
+                if (!section || !button) return;
+
+                let shouldOpen = false;
+                try {
+                    shouldOpen = localStorage.getItem(`gpsControlSection:${sectionId}`) === "open";
+                } catch (_) {}
+
+                section.hidden = !shouldOpen;
+                button.classList.toggle("open", shouldOpen);
+                button.setAttribute("aria-expanded", String(shouldOpen));
+            });
+        }
+
         // ============================================================
         // 5. ΧΑΡΤΗΣ
         // ============================================================
@@ -1115,6 +1199,7 @@
             importedPolygonGroup = L.featureGroup().addTo(map);
 
             loadState();
+            restoreControlSections();
             createThematicLayers();
             restoreThematicLayers();
             updateMapButtonAndMenu();
@@ -1193,6 +1278,9 @@
             setStatus(`🗺️ Επιλέχθηκε: ${MAP_LAYER_NAMES[mapLayer]}`, "green");
         }
 
+        // Τρέχον επίσημο δημόσιο WMS endpoint της Terrascope.
+        // Το παλιό MapProxy endpoint έχει αποσυρθεί· χρησιμοποιούμε τα ακριβή layer IDs
+        // που δημοσιεύονται στο GetCapabilities της νέας υπηρεσίας.
         const TERRASCOPE_WMS_URL = "https://titiler.terrascope.be/wms";
 
         function createPublicTerrascopeLayer(layerName, attribution) {
@@ -1201,11 +1289,15 @@
                 styles: "",
                 format: "image/png",
                 transparent: true,
-                version: "1.1.1",
-                uppercase: true,
+                version: "1.3.0",
+                crs: L.CRS.EPSG3857,
+                time: "2021-01-01",
                 opacity: thematicOpacity,
                 pane: "thematicPane",
                 zIndex: 350,
+                tileSize: 256,
+                updateWhenIdle: false,
+                keepBuffer: 3,
                 maxZoom: 19,
                 attribution
             });
@@ -1231,10 +1323,15 @@
                 }
             });
 
-            layer.on("tileerror", () => {
+            layer.on("tileerror", event => {
                 failedTiles += 1;
+                console.error("WMS tile error", {
+                    key,
+                    title: thematicLayerTitle(key),
+                    url: event?.tile?.src || TERRASCOPE_WMS_URL
+                });
                 if (failedTiles === 1 && activeThematicLayers.has(key)) {
-                    setStatus(`⚠️ Πρόβλημα σύνδεσης με το επίπεδο ${thematicLayerTitle(key)}`, "orange");
+                    setStatus(`⚠️ Αποτυχία Terrascope WMS: ${thematicLayerTitle(key)}. Δοκίμασε ξανά ή άλλαξε προσωρινά επίπεδο.`, "orange");
                 }
             });
 
@@ -1247,8 +1344,8 @@
         }
 
         function createThematicLayers() {
-            // Σταθερά δημόσια προϊόντα 2021. Δεν χρειάζονται λογαριασμό,
-            // API key ή επιλογή ημερομηνίας και είναι πιο αξιόπιστα σε web εφαρμογή.
+            // Σταθερά δημόσια προϊόντα WorldCover 2021 μέσω του τρέχοντος επίσημου Terrascope WMS.
+            // Δεν χρειάζονται λογαριασμό, API key ή επιλογή ημερομηνίας.
             thematicLayers.landcover = createPublicTerrascopeLayer(
                 "esa-worldcover-map-10m-2021-v2_map",
                 "ESA WorldCover 2021 / Terrascope"
@@ -1349,6 +1446,11 @@
                 layer.addTo(map);
                 layer.bringToFront?.();
                 layer.redraw?.();
+                window.setTimeout(() => {
+                    map.invalidateSize(false);
+                    layer.redraw?.();
+                    layer.bringToFront?.();
+                }, 180);
                 activeThematicLayers.add(key);
                 setStatus(`✅ Ενεργοποιήθηκε: ${thematicLayerTitle(key)}`, "green");
             } else {
@@ -2649,4 +2751,5 @@
     </script>
 </body>
 </html>
+
 
