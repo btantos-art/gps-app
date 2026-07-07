@@ -13,35 +13,52 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: "Segoe UI", Arial, sans-serif; background: #1a1a2e; color: white; }
-        #map { height: 45vh; min-height: 260px; width: 100%; border-bottom: 3px solid #e94560; }
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            font-size: 14px;
+        }
+        #map {
+            height: 56vh;
+            min-height: 360px;
+            width: 100%;
+            border-bottom: 3px solid #e94560;
+        }
         #controls {
-            padding: 10px 8px 12px;
+            padding: 12px 10px 14px;
             background: #16213e;
         }
-        .control-row {
+        .control-row,
+        .clear-row {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 8px;
+            gap: 10px;
             width: 100%;
+        }
+        .clear-row {
+            margin-top: 10px;
+        }
+        .clear-row .btn-clear {
+            grid-column: 2;
         }
         .control-section-title {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
-            margin: 11px 0 8px;
-            color: #dce8ff;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.8px;
+            margin: 13px 0 9px;
+            color: #edf3ff;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.9px;
             text-transform: uppercase;
         }
         .control-section-title::before,
         .control-section-title::after {
             content: "";
             flex: 1;
-            height: 1px;
+            height: 2px;
             background: #52658f;
         }
         button {
@@ -50,17 +67,17 @@
             cursor: pointer;
             transition: transform 0.15s, filter 0.15s;
             font-family: inherit;
-            font-weight: 800;
+            font-weight: 850;
         }
         .control-button {
-            min-height: 50px;
-            padding: 9px 7px;
-            font-size: 13px;
-            line-height: 1.15;
+            min-height: 56px;
+            padding: 10px 8px;
+            font-size: 15px;
+            line-height: 1.2;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             text-align: center;
             white-space: normal;
         }
@@ -73,69 +90,285 @@
         .btn-dxf { background: #0f3460; color: white; }
         .btn-kmz { background: #ff9800; color: white; }
         .btn-csv { background: #9c27b0; color: white; }
-        .btn-map { background: #8bc34a; color: #1a1a2e; }
+        .btn-map { background: #8bc34a; color: #15220c; }
         .btn-clear { background: #533483; color: white; }
         .btn-ref { background: #00bcd4; color: white; }
         .btn-upload { background: #ff5722; color: white; }
-        #info { padding: 5px 8px; background: #0f3460; margin: 3px 5px; border-radius: 6px; font-size: 10px; line-height: 1.35; min-height: 38px; }
-        #info strong { color: #e94560; }
-        #status { padding: 4px 6px; margin: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; text-align: center; background: #101628; overflow-wrap: anywhere; }
-        #progress-bar { width: calc(100% - 10px); height: 3px; background: #333; border-radius: 2px; margin: 2px 5px; overflow: hidden; display: none; }
-        #progress-bar-fill { height: 100%; width: 0; background: linear-gradient(90deg, #4CAF50, #8bc34a); border-radius: 2px; transition: width 0.25s; }
-        #settings { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 6px; background: #16213e; margin: 2px 5px; border-radius: 4px; align-items: center; font-size: 9px; }
-        #settings label { display: flex; align-items: center; gap: 2px; }
-        #settings input[type="number"] { width: 44px; padding: 2px; border-radius: 3px; border: 1px solid #334; background: #1a1a2e; color: white; font-size: 9px; text-align: center; }
-        #settings input[type="text"] { width: 76px; padding: 2px; border-radius: 3px; border: 1px solid #334; background: #1a1a2e; color: white; font-size: 9px; }
-        #coords-list { padding: 4px 5px; max-height: 180px; overflow-y: auto; background: #16213e; margin: 0 5px 5px; border-radius: 6px; font-size: 10px; font-family: Consolas, monospace; }
+
+        #status {
+            padding: 7px 9px;
+            margin: 4px 7px;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.35;
+            font-weight: 800;
+            text-align: center;
+            background: #101628;
+            overflow-wrap: anywhere;
+        }
+        #progress-bar {
+            width: calc(100% - 14px);
+            height: 4px;
+            background: #333;
+            border-radius: 3px;
+            margin: 3px 7px;
+            overflow: hidden;
+            display: none;
+        }
+        #progress-bar-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #4CAF50, #8bc34a);
+            border-radius: 3px;
+            transition: width 0.25s;
+        }
+
+        #settings {
+            display: grid;
+            grid-template-columns: minmax(180px, 1.55fr) minmax(120px, 1fr) minmax(120px, 1fr);
+            gap: 8px;
+            padding: 9px;
+            background: #16213e;
+            margin: 4px 7px;
+            border-radius: 8px;
+            align-items: stretch;
+            font-size: 13px;
+        }
+        #settings label {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 5px;
+            min-width: 0;
+            padding: 7px;
+            border-radius: 7px;
+            background: #101a32;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+        #settings input[type="number"],
+        #settings input[type="text"] {
+            width: 100%;
+            min-width: 0;
+            height: 36px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid #52658f;
+            background: #1a1a2e;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+        }
+        #settings input[type="text"] { text-align: left; }
+        .input-unit {
+            font-size: 12px;
+            color: #cbd7ee;
+            font-weight: 700;
+        }
+        .area-display {
+            grid-column: 1 / -1;
+            justify-self: center;
+            background: #0f3460;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-weight: 850;
+            color: #ffb74d;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        #info {
+            padding: 8px 10px;
+            background: #0f3460;
+            margin: 4px 7px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            min-height: 46px;
+        }
+        #info strong { color: #ff6680; }
+        #extraInfo { font-size: 12px !important; }
+
+        #coords-list {
+            padding: 5px 6px 9px;
+            max-height: 230px;
+            overflow-x: auto;
+            overflow-y: auto;
+            scrollbar-gutter: stable both-edges;
+            background: #16213e;
+            margin: 0 7px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: Consolas, "Courier New", monospace;
+            -webkit-overflow-scrolling: touch;
+        }
         .point-row {
-            padding: 6px 3px;
+            min-width: 720px;
+            padding: 8px 5px;
             border-bottom: 1px solid #2a3a5e;
             display: grid;
             grid-template-columns: auto 1fr auto;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         .point-row:last-child { border-bottom: 0; }
-        .point-main { min-width: 0; line-height: 1.35; overflow-wrap: anywhere; }
-        .point-detail { display: block; color: #bbb; font-size: 9px; margin-top: 2px; }
+        .point-main {
+            min-width: 0;
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+        .point-detail {
+            display: inline-block;
+            color: #c4cbe0;
+            font-size: 11px;
+            margin-left: 12px;
+            white-space: nowrap;
+        }
         .delete-point-btn {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
             padding: 0;
             border-radius: 10px;
             background: #c62828;
             color: white;
-            font-size: 16px;
+            font-size: 17px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
         .delete-point-btn:hover { filter: brightness(1.15); }
-        .empty-points { padding: 8px; text-align: center; color: #aeb8cf; font-family: "Segoe UI", Arial, sans-serif; }
-        .badge { display: inline-block; padding: 0 5px; border-radius: 20px; font-size: 8px; font-weight: 700; }
+        .empty-points {
+            padding: 12px;
+            text-align: center;
+            color: #bdc7de;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 13px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+        }
         .badge-green { background: #4CAF50; color: white; }
         .badge-orange { background: #ff9800; color: white; }
         .badge-red { background: #f44336; color: white; }
         .badge-gray { background: #607d8b; color: white; }
-        .detail { color: #bbb; font-size: 8px; margin-left: auto; }
-        .area-display { background: #0f3460; padding: 2px 8px; border-radius: 20px; font-weight: 700; color: #ff9800; font-size: 10px; }
-        .leaflet-popup-content { margin: 10px 12px; min-width: 190px; }
-        .popup-title { font-weight: 700; margin-bottom: 5px; }
-        .popup-row { margin: 2px 0; }
-        .popup-button { width: 100%; margin-top: 7px; padding: 5px 9px; background: #00bcd4; color: white; border: 0; border-radius: 18px; font-weight: 700; cursor: pointer; }
-        .current-emoji-marker, .reference-emoji-marker { background: transparent; border: 0; text-align: center; font-size: 23px; line-height: 27px; }
-        @media (max-width: 600px) {
-            #controls { padding: 8px 6px 10px; }
-            .control-row { gap: 6px; }
-            .control-button { min-height: 54px; padding: 8px 5px; font-size: 12px; }
-            .control-section-title { margin: 10px 0 7px; font-size: 11px; }
-            #info { font-size: 9px; }
-            #settings { font-size: 8px; }
-            #map { height: 42vh; }
+
+        .leaflet-popup-content { margin: 11px 13px; min-width: 205px; font-size: 13px; }
+        .popup-title { font-weight: 800; margin-bottom: 6px; }
+        .popup-row { margin: 3px 0; }
+        .popup-button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #00bcd4;
+            color: white;
+            border: 0;
+            border-radius: 18px;
+            font-weight: 800;
+            cursor: pointer;
         }
-        @media (max-width: 380px) {
-            .control-button { font-size: 11px; padding: 7px 3px; }
+        .current-emoji-marker,
+        .reference-emoji-marker {
+            background: transparent;
+            border: 0;
+            text-align: center;
+            font-size: 25px;
+            line-height: 29px;
+        }
+
+        /* Παράθυρο επιλογής υποβάθρου */
+        .map-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(5, 10, 25, 0.78);
+        }
+        .map-modal.open { display: flex; }
+        .map-modal-panel {
+            width: min(520px, 100%);
+            max-height: 85vh;
+            overflow-y: auto;
+            background: #16213e;
+            border: 1px solid #52658f;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+        }
+        .map-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .map-modal-title { font-size: 18px; font-weight: 900; }
+        .map-modal-close {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #293859;
+            color: white;
+            font-size: 20px;
+        }
+        .map-option-list { display: grid; gap: 9px; }
+        .map-option {
+            width: 100%;
+            min-height: 54px;
+            padding: 9px 12px;
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid transparent;
+            border-radius: 11px;
+            background: #0f3460;
+            color: white;
+            text-align: left;
+            font-size: 14px;
+        }
+        .map-option.active { border-color: #8bc34a; background: #174878; }
+        .map-option-icon { font-size: 22px; text-align: center; }
+        .map-option-name { font-weight: 850; }
+        .map-option-note { display: block; margin-top: 2px; color: #c3cde2; font-size: 11px; font-weight: 600; }
+        .map-option-check { color: #b9f36d; font-size: 20px; }
+
+        @media (max-width: 600px) {
+            #map { height: 51vh; min-height: 320px; }
+            #controls { padding: 10px 7px 12px; }
+            .control-row, .clear-row { gap: 7px; }
+            .control-button { min-height: 58px; padding: 9px 5px; font-size: 13px; }
+            .control-section-title { margin: 11px 0 8px; font-size: 13px; }
+            #settings {
+                grid-template-columns: 1.35fr 1fr 1fr;
+                gap: 5px;
+                padding: 6px;
+                font-size: 11px;
+            }
+            #settings label { padding: 5px; gap: 4px; }
+            #settings input[type="number"], #settings input[type="text"] {
+                height: 34px;
+                padding: 4px 5px;
+                font-size: 13px;
+            }
+            .input-unit { font-size: 10px; }
+            .area-display { font-size: 13px; padding: 6px 10px; }
+            #info { font-size: 12px; }
+            #extraInfo { font-size: 11px !important; }
+            #coords-list { max-height: 210px; }
+        }
+        @media (max-width: 390px) {
+            .control-button { font-size: 12px; padding: 8px 3px; }
+            #settings { font-size: 10px; }
+            #settings input[type="number"], #settings input[type="text"] { font-size: 12px; }
         }
     </style>
 </head>
@@ -153,7 +386,7 @@
         <div class="control-row" aria-label="Λειτουργίες εισαγωγής">
             <button class="control-button btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn">📍 <span>Τριγωνομετρικά</span></button>
             <button class="control-button btn-upload" onclick="document.getElementById('csvUpload').click()">📤 <span>Φόρτωση CSV</span></button>
-            <button class="control-button btn-map" onclick="toggleMap()" id="mapBtn">🛰️ <span>Δορυφόρος</span></button>
+            <button class="control-button btn-map" onclick="openMapMenu()" id="mapBtn">🗺️ <span id="mapBtnLabel">Επιλογή χάρτη</span></button>
             <input type="file" id="csvUpload" accept=".csv,text/csv" hidden onchange="loadCustomRefPoints(event)">
         </div>
 
@@ -164,8 +397,8 @@
             <button class="control-button btn-csv" onclick="exportCSV()">📊 <span>Εξαγωγή CSV</span></button>
         </div>
 
-        <div style="margin-top:8px;">
-            <button class="control-button btn-clear" onclick="clearAll()" style="width:100%;">🗑️ <span>Καθαρισμός όλων των σημείων</span></button>
+        <div class="clear-row" aria-label="Καθαρισμός">
+            <button class="control-button btn-clear" onclick="clearAll()">🗑️ <span>Καθαρισμός</span></button>
         </div>
     </div>
 
@@ -173,9 +406,18 @@
     <div id="progress-bar"><div id="progress-bar-fill"></div></div>
 
     <div id="settings">
-        <label>🎯 Όριο ακρίβειας: <input type="number" id="maxAccInput" value="20" min="3" max="100" step="1"> m</label>
-        <label>⏹️ Διασπορά: <input type="number" id="spreadStopInput" value="1" min="0.2" max="10" step="0.1"> m</label>
-        <label>📝 Κωδικός: <input type="text" id="pointCodeInput" maxlength="40" placeholder="π.χ. ST01"></label>
+        <label>
+            <span>📝 Κωδικός σημείου</span>
+            <input type="text" id="pointCodeInput" maxlength="40" placeholder="π.χ. ST01">
+        </label>
+        <label>
+            <span>🎯 Όριο ακρίβειας <span class="input-unit">(m)</span></span>
+            <input type="number" id="maxAccInput" value="20" min="3" max="100" step="1">
+        </label>
+        <label>
+            <span>⏹️ Διασπορά <span class="input-unit">(m)</span></span>
+            <input type="number" id="spreadStopInput" value="1" min="0.2" max="10" step="0.1">
+        </label>
         <span id="areaDisplay" class="area-display">📐 Εμβαδό: 0,00 τ.μ.</span>
     </div>
 
@@ -187,6 +429,38 @@
     </div>
 
     <div id="coords-list"></div>
+
+
+    <div id="mapModal" class="map-modal" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle" onclick="handleMapModalBackdrop(event)">
+        <div class="map-modal-panel">
+            <div class="map-modal-header">
+                <div id="mapModalTitle" class="map-modal-title">🗺️ Επιλογή υποβάθρου</div>
+                <button type="button" class="map-modal-close" onclick="closeMapMenu()" aria-label="Κλείσιμο">×</button>
+            </div>
+            <div class="map-option-list">
+                <button type="button" class="map-option" data-map-key="osm" onclick="changeMapLayer('osm')">
+                    <span class="map-option-icon">🗺️</span>
+                    <span><span class="map-option-name">OpenStreetMap</span><span class="map-option-note">Δρόμοι, οικισμοί και τοπωνύμια</span></span>
+                    <span class="map-option-check"></span>
+                </button>
+                <button type="button" class="map-option" data-map-key="satellite" onclick="changeMapLayer('satellite')">
+                    <span class="map-option-icon">🛰️</span>
+                    <span><span class="map-option-name">Esri δορυφορικός</span><span class="map-option-note">Υψηλής ανάλυσης δορυφορικές και αεροφωτογραφίες</span></span>
+                    <span class="map-option-check"></span>
+                </button>
+                <button type="button" class="map-option" data-map-key="sentinel" onclick="changeMapLayer('sentinel')">
+                    <span class="map-option-icon">🌍</span>
+                    <span><span class="map-option-name">Sentinel‑2 Cloudless 2024</span><span class="map-option-note">Εναλλακτικό δορυφορικό μωσαϊκό Copernicus/EOX</span></span>
+                    <span class="map-option-check"></span>
+                </button>
+                <button type="button" class="map-option" data-map-key="topo" onclick="changeMapLayer('topo')">
+                    <span class="map-option-icon">⛰️</span>
+                    <span><span class="map-option-name">OpenTopoMap</span><span class="map-option-note">Ανάγλυφο, ισοϋψείς και τοπογραφική απεικόνιση</span></span>
+                    <span class="map-option-check"></span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         "use strict";
@@ -519,6 +793,13 @@
         // ============================================================
         // 5. ΧΑΡΤΗΣ
         // ============================================================
+        const MAP_LAYER_NAMES = {
+            osm: "OpenStreetMap",
+            satellite: "Esri δορυφορικός",
+            sentinel: "Sentinel‑2 2024",
+            topo: "OpenTopoMap"
+        };
+
         function initMap() {
             baseLayers = {
                 osm: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -528,11 +809,21 @@
                 satellite: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
                     attribution: "Tiles © Esri",
                     maxZoom: 19
+                }),
+                sentinel: L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg", {
+                    attribution: "EOxCloudless © EOX — modified Copernicus Sentinel data 2024",
+                    maxNativeZoom: 14,
+                    maxZoom: 19
+                }),
+                topo: L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+                    attribution: "Map data © OpenStreetMap contributors, SRTM | Map style © OpenTopoMap",
+                    maxNativeZoom: 17,
+                    maxZoom: 19
                 })
             };
 
             const savedLayer = localStorage.getItem(STORAGE_KEY_MAP);
-            mapLayer = savedLayer === "satellite" ? "satellite" : "osm";
+            mapLayer = Object.prototype.hasOwnProperty.call(baseLayers, savedLayer) ? savedLayer : "osm";
 
             map = L.map("map", {
                 layers: [baseLayers[mapLayer]],
@@ -542,8 +833,7 @@
 
             measurementLayer = L.layerGroup().addTo(map);
             trigLayer = L.layerGroup().addTo(map);
-
-            document.getElementById("mapBtn").textContent = mapLayer === "satellite" ? "🗺️ Χάρτης" : "🛰️ Δορυφόρος";
+            updateMapButtonAndMenu();
 
             loadState();
             updateDisplay();
@@ -559,8 +849,17 @@
                 if (isTrigLoaded) updateVisibleTrigPoints();
             });
 
+            Object.entries(baseLayers).forEach(([key, layer]) => {
+                layer.on("tileerror", () => {
+                    if (mapLayer === key) setStatus(`⚠️ Προσωρινό πρόβλημα φόρτωσης του χάρτη: ${MAP_LAYER_NAMES[key]}`, "orange");
+                });
+            });
+
             document.getElementById("maxAccInput").addEventListener("change", saveSettingsFromInputs);
             document.getElementById("spreadStopInput").addEventListener("change", saveSettingsFromInputs);
+            document.addEventListener("keydown", event => {
+                if (event.key === "Escape") closeMapMenu();
+            });
         }
 
         function saveSettingsFromInputs() {
@@ -571,14 +870,45 @@
             saveState();
         }
 
-        function toggleMap() {
+        function openMapMenu() {
+            updateMapButtonAndMenu();
+            document.getElementById("mapModal").classList.add("open");
+        }
+
+        function closeMapMenu() {
+            document.getElementById("mapModal").classList.remove("open");
+        }
+
+        function handleMapModalBackdrop(event) {
+            if (event.target === event.currentTarget) closeMapMenu();
+        }
+
+        function updateMapButtonAndMenu() {
+            const label = document.getElementById("mapBtnLabel");
+            if (label) label.textContent = MAP_LAYER_NAMES[mapLayer] || "Επιλογή χάρτη";
+
+            document.querySelectorAll(".map-option").forEach(button => {
+                const active = button.dataset.mapKey === mapLayer;
+                button.classList.toggle("active", active);
+                const check = button.querySelector(".map-option-check");
+                if (check) check.textContent = active ? "✓" : "";
+            });
+        }
+
+        function changeMapLayer(nextLayer) {
+            if (!Object.prototype.hasOwnProperty.call(baseLayers, nextLayer)) return;
+
             const oldLayer = baseLayers[mapLayer];
-            mapLayer = mapLayer === "osm" ? "satellite" : "osm";
-            if (map.hasLayer(oldLayer)) map.removeLayer(oldLayer);
+            if (oldLayer && map.hasLayer(oldLayer)) map.removeLayer(oldLayer);
+
+            mapLayer = nextLayer;
             baseLayers[mapLayer].addTo(map);
-            baseLayers[mapLayer].bringToBack();
+            if (typeof baseLayers[mapLayer].bringToBack === "function") baseLayers[mapLayer].bringToBack();
+
             localStorage.setItem(STORAGE_KEY_MAP, mapLayer);
-            document.getElementById("mapBtn").textContent = mapLayer === "satellite" ? "🗺️ Χάρτης" : "🛰️ Δορυφόρος";
+            updateMapButtonAndMenu();
+            closeMapMenu();
+            setStatus(`🗺️ Επιλέχθηκε: ${MAP_LAYER_NAMES[mapLayer]}`, "green");
         }
 
         function createEmojiMarker(lat, lon, emoji, className) {
@@ -858,7 +1188,7 @@
             const altitude = isFiniteNumber(position.alt) ? `${formatNumber(position.alt, 1)} m` : "N/A";
             const accuracy = isFiniteNumber(position.acc) ? `±${formatNumber(position.acc, 1)} m` : "N/A";
             const satellites = isFiniteNumber(position.satellites) ? formatInteger(position.satellites) : "N/A";
-            const code = position.code ? ` | Κωδ.: ${position.code}` : "";
+            const code = position.code ? ` | Κωδικός σημείου: ${position.code}` : "";
 
             document.getElementById("currentPos").innerHTML =
                 `X=${formatNumber(position.x, 2)} m, Y=${formatNumber(position.y, 2)} m ` +
