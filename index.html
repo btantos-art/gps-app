@@ -10,25 +10,25 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; }
-        #map { height: 40vh; width: 100%; border-bottom: 3px solid #e94560; }
+        #map { height: 38vh; width: 100%; border-bottom: 3px solid #e94560; }
         #controls {
-            padding: 10px 12px;
+            padding: 8px 10px;
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 5px;
             justify-content: center;
             background: #16213e;
         }
         button {
-            padding: 8px 14px;
+            padding: 6px 12px;
             border: none;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
             flex: 1 1 auto;
-            min-width: 70px;
+            min-width: 60px;
         }
         button:active { transform: scale(0.95); }
         .btn-gps { background: #4CAF50; color: white; }
@@ -36,33 +36,34 @@
         .btn-add { background: #e94560; color: white; }
         .btn-dxf { background: #0f3460; color: white; }
         .btn-kmz { background: #ff9800; color: white; }
+        .btn-csv { background: #9c27b0; color: white; }
         .btn-map { background: #8bc34a; color: #1a1a2e; }
         .btn-clear { background: #533483; color: white; }
         #info {
-            padding: 10px 14px;
+            padding: 8px 12px;
             background: #0f3460;
-            margin: 8px 10px;
-            border-radius: 12px;
-            font-size: 13px;
+            margin: 6px 8px;
+            border-radius: 10px;
+            font-size: 12px;
             line-height: 1.5;
-            min-height: 60px;
+            min-height: 50px;
         }
         #info strong { color: #e94560; }
         #status {
-            padding: 6px 12px;
-            margin: 0 10px 6px;
-            border-radius: 8px;
-            font-size: 13px;
+            padding: 5px 10px;
+            margin: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: bold;
             text-align: center;
             background: #1a1a2e;
         }
         #progress-bar {
             width: 100%;
-            height: 4px;
+            height: 3px;
             background: #333;
             border-radius: 2px;
-            margin: 4px 0;
+            margin: 3px 0;
             overflow: hidden;
             display: none;
         }
@@ -73,25 +74,49 @@
             border-radius: 2px;
             transition: width 0.3s;
         }
+        #settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #16213e;
+            margin: 4px 8px;
+            border-radius: 8px;
+            align-items: center;
+            font-size: 12px;
+        }
+        #settings label { display: flex; align-items: center; gap: 4px; }
+        #settings input[type="number"] {
+            width: 50px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            border: none;
+            background: #1a1a2e;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+        }
         #coords-list {
-            padding: 6px 10px;
-            max-height: 120px;
+            padding: 4px 8px;
+            max-height: 110px;
             overflow-y: auto;
             background: #16213e;
-            margin: 0 10px 10px;
-            border-radius: 8px;
-            font-size: 12px;
+            margin: 0 8px 8px;
+            border-radius: 6px;
+            font-size: 11px;
             font-family: monospace;
         }
-        #coords-list div { padding: 3px 0; border-bottom: 1px solid #2a3a5e; display: flex; align-items: center; gap: 8px; }
-        .badge { display: inline-block; padding: 1px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        #coords-list div { padding: 2px 0; border-bottom: 1px solid #2a3a5e; display: flex; align-items: center; gap: 6px; }
+        .badge { display: inline-block; padding: 0 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
         .badge-green { background: #4CAF50; color: white; }
         .badge-orange { background: #ff9800; color: white; }
         .badge-red { background: #f44336; color: white; }
-        .detail { color: #aaa; font-size: 11px; margin-left: auto; }
+        .detail { color: #aaa; font-size: 10px; margin-left: auto; }
+        .area-display { background: #0f3460; padding: 4px 12px; border-radius: 20px; font-weight: bold; color: #ff9800; }
         @media (max-width: 600px) {
-            button { font-size: 11px; padding: 6px 10px; min-width: 55px; }
-            #info { font-size: 11px; padding: 8px; }
+            button { font-size: 10px; padding: 5px 8px; min-width: 50px; }
+            #info { font-size: 11px; padding: 6px; }
+            #settings { font-size: 11px; }
         }
     </style>
 </head>
@@ -105,6 +130,7 @@
         <button class="btn-add" onclick="addPoint()" id="addBtn" disabled>➕ Προσθήκη</button>
         <button class="btn-dxf" onclick="exportDXF()">💾 DXF</button>
         <button class="btn-kmz" onclick="exportKMZ()">🌍 KMZ</button>
+        <button class="btn-csv" onclick="exportCSV()">📊 CSV</button>
         <button class="btn-map" onclick="toggleMap()" id="mapBtn">🛰️ Δορυφόρος</button>
         <button class="btn-clear" onclick="clearAll()">🗑️ Καθαρισμός</button>
     </div>
@@ -112,10 +138,16 @@
     <div id="status">🟢 Έτοιμο</div>
     <div id="progress-bar"><div id="progress-bar-fill"></div></div>
 
+    <div id="settings">
+        <label>🎯 Όριο ακρίβειας: <input type="number" id="maxAccInput" value="20" min="3" max="50" step="1"> m</label>
+        <label>⏹️ Διασπορά <input type="number" id="spreadStopInput" value="1" min="0.5" max="5" step="0.5"> m</label>
+        <span id="areaDisplay" class="area-display">📐 Εμβαδό: 0.00 τ.μ.</span>
+    </div>
+
     <div id="info">
         <strong>📍 Θέση (ΕΓΣΑ87):</strong> <span id="currentPos">Αναμονή GPS...</span><br>
-        <strong>📐 Σημεία:</strong> <span id="pointCount">0</span>
-        <span id="extraInfo" style="display:block;margin-top:3px;font-size:11px;color:#aaa;"></span>
+        <strong>📐 Σημεία:</strong> <span id="pointCount">0</span> &nbsp;|&nbsp; <strong>🛰️ Δορυφόροι:</strong> <span id="satCount">-</span>
+        <span id="extraInfo" style="display:block;margin-top:2px;font-size:11px;color:#aaa;"></span>
     </div>
 
     <div id="coords-list"></div>
@@ -135,7 +167,21 @@
         }
 
         // ============================================================
-        // 2. ΚΑΤΑΣΤΑΣΗ
+        // 2. ΕΜΒΑΔΟΝ ΠΟΛΥΓΩΝΟΥ (Shoelace)
+        // ============================================================
+        function calculateArea(pts) {
+            if (pts.length < 3) return 0;
+            let area = 0;
+            for (let i = 0; i < pts.length; i++) {
+                const j = (i + 1) % pts.length;
+                area += pts[i].x * pts[j].y;
+                area -= pts[j].x * pts[i].y;
+            }
+            return Math.abs(area) / 2; // τετραγωνικά μέτρα
+        }
+
+        // ============================================================
+        // 3. ΚΑΤΑΣΤΑΣΗ
         // ============================================================
         let currentPos = null;
         let polygonPoints = [];
@@ -143,54 +189,71 @@
         let watchId = null;
         let avgReadings = [];
         let isAveraging = false;
-        let mapLayer = 'osm'; // 'osm' ή 'satellite'
+        let mapLayer = 'osm';
 
-        const AVG_DURATION = 8000;
-        const MAX_ACCURACY = 20;
-        const MIN_READINGS = 3;
+        const AVG_DURATION = 10000; // 10 sec max
+        let MAX_ACCURACY = 20;
+        let SPREAD_STOP = 1.0;
 
-        // ============================================================
-        // 3. ΧΑΡΤΗΣ ΜΕ ΔΥΟ LAYERS
-        // ============================================================
-        function initMap() {
-            // Δημιουργούμε δύο layers
-            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            });
-            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: '© ESRI'
-            });
+        // Φόρτωση αποθηκευμένων από localStorage
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('gpsPolygonPoints');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        polygonPoints = parsed;
+                        updateDisplay();
+                        drawPolygon();
+                        setStatus(`📂 Φορτώθηκαν ${polygonPoints.length} σημεία`, 'white');
+                    }
+                }
+                const acc = localStorage.getItem('gpsMaxAccuracy');
+                if (acc) { MAX_ACCURACY = parseFloat(acc); document.getElementById('maxAccInput').value = MAX_ACCURACY; }
+                const sp = localStorage.getItem('gpsSpreadStop');
+                if (sp) { SPREAD_STOP = parseFloat(sp); document.getElementById('spreadStopInput').value = SPREAD_STOP; }
+            } catch(e) {}
+        }
 
-            // Φορτώνουμε την προτίμηση από localStorage
-            const saved = localStorage.getItem('gpsMapLayer');
-            mapLayer = (saved === 'satellite') ? 'satellite' : 'osm';
-
-            // Δημιουργία χάρτη με το επιλεγμένο layer
-            const initialLayer = (mapLayer === 'satellite') ? satellite : osm;
-            map = L.map('map', { layers: [initialLayer] }).setView([38.0, 23.7], 7);
-
-            // Αποθήκευση αναφορών για εναλλαγή
-            map._layers = { osm, satellite };
-
-            // Ενημέρωση κουμπιού
-            document.getElementById('mapBtn').innerHTML = (mapLayer === 'satellite') ? '🗺️ Χάρτης' : '🛰️ Δορυφόρος';
+        // Αποθήκευση κατάστασης
+        function saveState() {
+            try {
+                localStorage.setItem('gpsPolygonPoints', JSON.stringify(polygonPoints));
+                localStorage.setItem('gpsMaxAccuracy', MAX_ACCURACY);
+                localStorage.setItem('gpsSpreadStop', SPREAD_STOP);
+            } catch(e) {}
         }
 
         // ============================================================
-        // 4. ΕΝΑΛΛΑΓΗ ΧΑΡΤΗ
+        // 4. ΧΑΡΤΗΣ
+        // ============================================================
+        function initMap() {
+            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
+            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© ESRI' });
+
+            const saved = localStorage.getItem('gpsMapLayer');
+            mapLayer = (saved === 'satellite') ? 'satellite' : 'osm';
+            const initialLayer = (mapLayer === 'satellite') ? satellite : osm;
+            map = L.map('map', { layers: [initialLayer] }).setView([38.0, 23.7], 7);
+            map._layers = { osm, satellite };
+            document.getElementById('mapBtn').innerHTML = (mapLayer === 'satellite') ? '🗺️ Χάρτης' : '🛰️ Δορυφόρος';
+
+            // Φόρτωση αποθηκευμένων σημείων και σχεδίαση
+            loadState();
+            if (polygonPoints.length > 0) drawPolygon();
+        }
+
+        // ============================================================
+        // 5. ΕΝΑΛΛΑΓΗ ΧΑΡΤΗ
         // ============================================================
         function toggleMap() {
-            const osm = map._layers.osm;
-            const satellite = map._layers.satellite;
-
+            const osm = map._layers.osm, sat = map._layers.satellite;
             if (mapLayer === 'osm') {
-                map.removeLayer(osm);
-                map.addLayer(satellite);
+                map.removeLayer(osm); map.addLayer(sat);
                 mapLayer = 'satellite';
                 document.getElementById('mapBtn').innerHTML = '🗺️ Χάρτης';
             } else {
-                map.removeLayer(satellite);
-                map.addLayer(osm);
+                map.removeLayer(sat); map.addLayer(osm);
                 mapLayer = 'osm';
                 document.getElementById('mapBtn').innerHTML = '🛰️ Δορυφόρος';
             }
@@ -198,13 +261,10 @@
         }
 
         // ============================================================
-        // 5. ΛΗΨΗ GPS (άμεση)
+        // 6. GPS (άμεσο)
         // ============================================================
         function getGPS() {
-            if (!navigator.geolocation) {
-                setStatus('❌ GPS δεν υποστηρίζεται', 'red');
-                return;
-            }
+            if (!navigator.geolocation) { setStatus('❌ GPS δεν υποστηρίζεται', 'red'); return; }
             setStatus('⏳ Αναζήτηση σήματος...', 'orange');
             navigator.geolocation.getCurrentPosition(
                 (pos) => { processPosition(pos); },
@@ -214,72 +274,96 @@
         }
 
         // ============================================================
-        // 6. ΕΠΕΞΕΡΓΑΣΙΑ ΜΕΤΡΗΣΗΣ
+        // 7. ΕΠΕΞΕΡΓΑΣΙΑ ΜΕΤΡΗΣΗΣ
         // ============================================================
         function processPosition(pos) {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            const alt = pos.coords.altitude;
-            const acc = pos.coords.accuracy;
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            const alt = pos.coords.altitude, acc = pos.coords.accuracy;
+            const sats = pos.coords.satellites || null; // μπορεί να μην υπάρχει
             const eg = wgs84ToEGSA87(lat, lon);
 
             currentPos = {
                 lat, lon, x: eg.x, y: eg.y,
                 alt: alt !== null ? Math.round(alt*10)/10 : null,
-                acc: acc !== null ? Math.round(acc*10)/10 : null
+                acc: acc !== null ? Math.round(acc*10)/10 : null,
+                satellites: sats
             };
 
             updateInfo(currentPos);
             document.getElementById('addBtn').disabled = false;
+            document.getElementById('satCount').innerText = (sats !== null) ? sats : 'N/A';
 
             if (marker) map.removeLayer(marker);
             marker = L.marker([lat, lon]).addTo(map)
-                .bindPopup(`📍 ${eg.x}, ${eg.y}<br>Υψ.${currentPos.alt||'N/A'}m | ±${currentPos.acc||'N/A'}m`)
+                .bindPopup(`📍 ${eg.x}, ${eg.y}<br>Υψ.${currentPos.alt||'N/A'}m | ±${currentPos.acc||'N/A'}m<br>🛰️ ${sats||'N/A'}`)
                 .openPopup();
             map.setView([lat, lon], 15);
-
             setStatus('✅ Θέση λήφθηκε', 'green');
         }
 
         // ============================================================
-        // 7. ΜΕΣΟΣ ΟΡΟΣ (με πρόοδο)
+        // 8. ΜΕΣΟΣ ΟΡΟΣ (με διακοπή από διασπορά)
         // ============================================================
         function startAverage() {
             if (isAveraging) return;
-            if (!navigator.geolocation) {
-                setStatus('❌ GPS δεν υποστηρίζεται', 'red');
-                return;
-            }
+            if (!navigator.geolocation) { setStatus('❌ GPS δεν υποστηρίζεται', 'red'); return; }
+
+            // Διάβασε ρυθμίσεις
+            MAX_ACCURACY = parseFloat(document.getElementById('maxAccInput').value) || 20;
+            SPREAD_STOP = parseFloat(document.getElementById('spreadStopInput').value) || 1.0;
+            localStorage.setItem('gpsMaxAccuracy', MAX_ACCURACY);
+            localStorage.setItem('gpsSpreadStop', SPREAD_STOP);
 
             isAveraging = true;
             avgReadings = [];
             document.getElementById('avgBtn').disabled = true;
             document.getElementById('progress-bar').style.display = 'block';
             document.getElementById('progress-bar-fill').style.width = '0%';
-            setStatus('⏳ Συλλογή μετρήσεων... 0%', 'orange');
+            setStatus(`⏳ Συλλογή (όριο ${MAX_ACCURACY}m, διασπορά <${SPREAD_STOP}m)`, 'orange');
 
             const startTime = Date.now();
+            let lastSpread = Infinity;
 
             watchId = navigator.geolocation.watchPosition(
                 (pos) => {
                     const acc = pos.coords.accuracy;
                     if (acc > MAX_ACCURACY) {
-                        setStatus(`⏳ Απόρριψη (ακρίβεια ${Math.round(acc)}m > ${MAX_ACCURACY}m)`, 'orange');
+                        setStatus(`⏳ Απόρριψη (ακρ. ${Math.round(acc)}m > ${MAX_ACCURACY}m)`, 'orange');
                         return;
                     }
-                    const lat = pos.coords.latitude;
-                    const lon = pos.coords.longitude;
-                    const alt = pos.coords.altitude;
+                    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+                    const alt = pos.coords.altitude, sats = pos.coords.satellites || null;
                     const eg = wgs84ToEGSA87(lat, lon);
                     avgReadings.push({
                         lat, lon, x: eg.x, y: eg.y,
                         alt: alt !== null ? alt : null,
-                        acc: acc
+                        acc: acc,
+                        satellites: sats
                     });
+
+                    // Υπολογισμός διασποράς (τυπική απόκλιση X,Y)
+                    if (avgReadings.length >= 3) {
+                        const n = avgReadings.length;
+                        const meanX = avgReadings.reduce((s,r) => s+r.x, 0)/n;
+                        const meanY = avgReadings.reduce((s,r) => s+r.y, 0)/n;
+                        let stdX = 0, stdY = 0;
+                        avgReadings.forEach(r => { stdX += (r.x - meanX)**2; stdY += (r.y - meanY)**2; });
+                        stdX = Math.sqrt(stdX/n); stdY = Math.sqrt(stdY/n);
+                        const spread = (stdX + stdY) / 2;
+                        lastSpread = spread;
+
+                        // Αν η διασπορά είναι κάτω από το όριο, σταματάμε
+                        if (spread < SPREAD_STOP) {
+                            setStatus(`⏹️ Διασπορά ${spread.toFixed(2)}m < ${SPREAD_STOP}m -> σταμάτημα`, 'green');
+                            stopAveraging(true);
+                            return;
+                        }
+                    }
+
                     const elapsed = Date.now() - startTime;
                     const pct = Math.min(100, Math.round((elapsed / AVG_DURATION) * 100));
                     document.getElementById('progress-bar-fill').style.width = pct + '%';
-                    setStatus(`⏳ Συλλογή... ${avgReadings.length} μετρήσεις (${pct}%)`, 'orange');
+                    setStatus(`⏳ Συλλογή... ${avgReadings.length} μετρήσεις (${pct}%) | διασπορά ${lastSpread.toFixed(2)}m`, 'orange');
                 },
                 (err) => {
                     setStatus('❌ Σφάλμα GPS: '+err.message, 'red');
@@ -288,51 +372,47 @@
                 { enableHighAccuracy: true, timeout: 5000 }
             );
 
+            // Timeout ασφαλείας
             setTimeout(() => {
-                stopAveraging(true);
+                if (isAveraging) stopAveraging(true);
             }, AVG_DURATION);
         }
 
         // ============================================================
-        // 8. ΣΤΑΜΑΤΗΜΑ ΜΕΣΟΥ ΟΡΟΥ
+        // 9. ΣΤΑΜΑΤΗΜΑ ΜΕΣΟΥ ΟΡΟΥ
         // ============================================================
         function stopAveraging(calculate) {
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
+            if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             isAveraging = false;
             document.getElementById('avgBtn').disabled = false;
             document.getElementById('progress-bar').style.display = 'none';
 
-            if (!calculate || avgReadings.length < MIN_READINGS) {
-                setStatus(`⚠️ Λίγες μετρήσεις (${avgReadings.length}<${MIN_READINGS})`, 'red');
+            if (!calculate || avgReadings.length < 2) {
+                setStatus(`⚠️ Λίγες μετρήσεις (${avgReadings.length}<2)`, 'red');
                 avgReadings = [];
                 return;
             }
 
             const n = avgReadings.length;
-            let sumX = 0, sumY = 0, sumAlt = 0, sumAcc = 0;
-            let altCount = 0;
+            let sumX = 0, sumY = 0, sumAlt = 0, sumAcc = 0, sumSats = 0;
+            let altCount = 0, satsCount = 0;
             avgReadings.forEach(r => {
-                sumX += r.x;
-                sumY += r.y;
+                sumX += r.x; sumY += r.y;
                 if (r.alt !== null) { sumAlt += r.alt; altCount++; }
                 sumAcc += r.acc;
+                if (r.satellites !== null) { sumSats += r.satellites; satsCount++; }
             });
             const avgX = Math.round(sumX / n);
             const avgY = Math.round(sumY / n);
             const avgAlt = altCount > 0 ? Math.round((sumAlt/altCount)*10)/10 : null;
             const avgAcc = Math.round((sumAcc/n)*10)/10;
+            const avgSats = satsCount > 0 ? Math.round(sumSats/satsCount) : null;
 
+            // Διασπορά
             let stdX = 0, stdY = 0;
-            avgReadings.forEach(r => {
-                stdX += (r.x - avgX)**2;
-                stdY += (r.y - avgY)**2;
-            });
-            stdX = Math.sqrt(stdX / n);
-            stdY = Math.sqrt(stdY / n);
-            const spread = Math.round((stdX + stdY) / 2);
+            avgReadings.forEach(r => { stdX += (r.x - avgX)**2; stdY += (r.y - avgY)**2; });
+            stdX = Math.sqrt(stdX/n); stdY = Math.sqrt(stdY/n);
+            const spread = (stdX + stdY) / 2;
 
             currentPos = {
                 lat: avgReadings.reduce((s,r) => s+r.lat, 0)/n,
@@ -340,6 +420,7 @@
                 x: avgX, y: avgY,
                 alt: avgAlt,
                 acc: avgAcc,
+                satellites: avgSats,
                 isAverage: true,
                 spread: spread,
                 readings: n
@@ -349,30 +430,34 @@
             document.getElementById('addBtn').disabled = false;
 
             let color = avgAcc < 5 ? 'green' : (avgAcc < 15 ? 'orange' : 'red');
-            setStatus(`✅ Μέσος όρος από ${n} μετρήσεις | Ακρίβεια ±${avgAcc}m | Διασπορά ±${spread}m`, color);
+            setStatus(`✅ Μέσος όρος από ${n} μετρήσεις | Ακρ. ±${avgAcc}m | Διασπορά ±${spread.toFixed(2)}m`, color);
 
             if (marker) map.removeLayer(marker);
             marker = L.marker([currentPos.lat, currentPos.lon], {
                 icon: L.divIcon({ html: '⭐', className: 'custom-marker', iconSize: [30,30] })
             }).addTo(map)
-                .bindPopup(`📊 Μέσος Όρος<br>X=${avgX}, Y=${avgY}<br>Υψ.${avgAlt||'N/A'}m<br>Ακρίβεια ±${avgAcc}m<br>Διασπορά ±${spread}m`)
+                .bindPopup(`📊 Μέσος Όρος<br>X=${avgX}, Y=${avgY}<br>Υψ.${avgAlt||'N/A'}m<br>Ακρ. ±${avgAcc}m<br>Διασπορά ±${spread.toFixed(2)}m<br>🛰️ ${avgSats||'N/A'}`)
                 .openPopup();
             map.setView([currentPos.lat, currentPos.lon], 15);
-
             avgReadings = [];
         }
 
         // ============================================================
-        // 9. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
+        // 10. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
         // ============================================================
         function addPoint() {
-            if (!currentPos) {
-                alert('Πάρε πρώτα GPS ή Μέσο Όρο!');
-                return;
-            }
+            if (!currentPos) { alert('Πάρε πρώτα GPS ή Μέσο Όρο!'); return; }
             polygonPoints.push({ ...currentPos });
+            saveState();
             updateDisplay();
+            drawPolygon();
+            setStatus(`➕ Προστέθηκε σημείο #${polygonPoints.length}`, 'green');
+        }
 
+        // ============================================================
+        // 11. ΣΧΕΔΙΑΣΗ ΠΟΛΥΓΩΝΟΥ
+        // ============================================================
+        function drawPolygon() {
             const ll = polygonPoints.map(p => [p.lat, p.lon]);
             if (polyline) map.removeLayer(polyline);
             if (polygonLayer) map.removeLayer(polygonLayer);
@@ -383,23 +468,29 @@
                 polyline = L.polyline(ll, { color: '#e94560', weight: 3 }).addTo(map);
                 if (ll.length >= 3) {
                     polygonLayer = L.polygon(ll, { color: '#e94560', fillColor: '#e94560', fillOpacity: 0.2 }).addTo(map);
+                    // Υπολογισμός εμβαδού
+                    const area = calculateArea(polygonPoints);
+                    document.getElementById('areaDisplay').innerHTML = `📐 Εμβαδό: ${area.toFixed(2)} τ.μ. (${(area/1000).toFixed(2)} στρ.)`;
+                } else {
+                    document.getElementById('areaDisplay').innerHTML = `📐 Εμβαδό: χρειάζονται ≥3 σημεία`;
                 }
             }
-            map.setView(ll[ll.length-1], 15);
-            setStatus(`➕ Προστέθηκε σημείο #${polygonPoints.length}`, 'green');
+            if (ll.length > 0) map.setView(ll[ll.length-1], 15);
         }
 
         // ============================================================
-        // 10. ΕΝΗΜΕΡΩΣΗ UI
+        // 12. ΕΝΗΜΕΡΩΣΗ UI
         // ============================================================
         function updateInfo(pos) {
             let altText = pos.alt !== null ? `${pos.alt} m` : 'N/A';
             let accText = pos.acc !== null ? `±${pos.acc} m` : 'N/A';
+            let satText = pos.satellites !== null ? pos.satellites : 'N/A';
             document.getElementById('currentPos').innerHTML =
                 `X=${pos.x} m, Y=${pos.y} m &nbsp; <span style="font-size:11px;color:#aaa;">(${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)})</span>`;
             document.getElementById('extraInfo').innerHTML =
                 `📏 Υψόμετρο: ${altText} &nbsp;|&nbsp; 🎯 Ακρίβεια: ${accText}` +
-                (pos.isAverage ? ` &nbsp;|&nbsp; 📊 Μέσος από ${pos.readings} μετρήσεις, διασπορά ±${pos.spread}m` : '');
+                (pos.isAverage ? ` &nbsp;|&nbsp; 📊 Μέσος από ${pos.readings} μετρήσεις, διασπορά ±${pos.spread.toFixed(2)}m` : '');
+            document.getElementById('satCount').innerText = satText;
         }
 
         function updateDisplay() {
@@ -408,13 +499,14 @@
             list.innerHTML = polygonPoints.map((p, i) => {
                 let altTxt = p.alt !== null ? `${p.alt}m` : 'N/A';
                 let accTxt = p.acc !== null ? `±${p.acc}m` : 'N/A';
+                let satTxt = p.satellites !== null ? p.satellites : 'N/A';
                 let badgeClass = p.acc < 5 ? 'badge-green' : (p.acc < 15 ? 'badge-orange' : 'badge-red');
                 let badgeLabel = p.acc < 5 ? '✅' : (p.acc < 15 ? '🟡' : '🔴');
                 let isAvg = p.isAverage ? '⭐ ' : '';
                 return `<div>
                     <span class="badge ${badgeClass}">${badgeLabel}</span>
                     ${isAvg}#${i+1} → X=${p.x}m, Y=${p.y}m
-                    <span class="detail">Υψ.${altTxt} | ${accTxt}</span>
+                    <span class="detail">Υψ.${altTxt} | ${accTxt} | 🛰️${satTxt}</span>
                 </div>`;
             }).join('');
             list.scrollTop = list.scrollHeight;
@@ -426,7 +518,35 @@
         }
 
         // ============================================================
-        // 11. ΕΞΑΓΩΓΕΣ (DXF, KMZ)
+        // 13. ΕΞΑΓΩΓΗ CSV
+        // ============================================================
+        function exportCSV() {
+            if (polygonPoints.length === 0) { alert('Δεν υπάρχουν σημεία!'); return; }
+            let csv = '#,X,Y,Υψόμετρο,Ακρίβεια,Δορυφόροι,Μέσος_Όρος\n';
+            polygonPoints.forEach((p, i) => {
+                const alt = p.alt !== null ? p.alt : '';
+                const acc = p.acc !== null ? p.acc : '';
+                const sats = p.satellites !== null ? p.satellites : '';
+                const isAvg = p.isAverage ? 'ΝΑΙ' : 'ΟΧΙ';
+                csv += `${i+1},${p.x},${p.y},${alt},${acc},${sats},${isAvg}\n`;
+            });
+            // Προσθήκη εμβαδού στο τέλος
+            if (polygonPoints.length >= 3) {
+                const area = calculateArea(polygonPoints);
+                csv += `\nΕμβαδό,${area.toFixed(2)} τ.μ.,${(area/1000).toFixed(2)} στρέμματα\n`;
+            }
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `points_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert('✅ CSV κατέβηκε!');
+        }
+
+        // ============================================================
+        // 14. ΕΞΑΓΩΓΗ DXF
         // ============================================================
         function exportDXF() {
             if (polygonPoints.length < 3) { alert('⚠️ Χρειάζονται ≥3 σημεία!'); return; }
@@ -446,6 +566,9 @@
             alert('✅ DXF κατέβηκε!');
         }
 
+        // ============================================================
+        // 15. ΕΞΑΓΩΓΗ KMZ
+        // ============================================================
         function exportKMZ() {
             if (polygonPoints.length < 3) { alert('⚠️ Χρειάζονται ≥3 σημεία!'); return; }
             let kml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -496,16 +619,20 @@
         }
 
         // ============================================================
-        // 12. ΚΑΘΑΡΙΣΜΟΣ
+        // 16. ΚΑΘΑΡΙΣΜΟΣ
         // ============================================================
         function clearAll() {
+            if (polygonPoints.length > 0 && !confirm('Σβήσιμο όλων των σημείων;')) return;
             polygonPoints = [];
             currentPos = null;
+            localStorage.removeItem('gpsPolygonPoints');
             document.getElementById('currentPos').innerText = 'Αναμονή GPS...';
             document.getElementById('pointCount').innerText = '0';
             document.getElementById('coords-list').innerHTML = '';
             document.getElementById('addBtn').disabled = true;
             document.getElementById('extraInfo').innerHTML = '';
+            document.getElementById('satCount').innerText = '-';
+            document.getElementById('areaDisplay').innerHTML = '📐 Εμβαδό: 0.00 τ.μ.';
             setStatus('🟢 Έτοιμο', 'white');
             if (marker) map.removeLayer(marker);
             if (polyline) map.removeLayer(polyline);
@@ -519,11 +646,9 @@
         }
 
         // ============================================================
-        // 13. ΕΚΚΙΝΗΣΗ
+        // 17. ΕΚΚΙΝΗΣΗ
         // ============================================================
         window.onload = initMap;
     </script>
 </body>
 </html>
-
-
