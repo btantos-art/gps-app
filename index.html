@@ -3,33 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Greek Grid GPS Pro</title>
+    <title>Greek Grid GPS Pro - Τοπογραφικό Εργαλείο</title>
+    <!-- Leaflet.js & JSZip -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+        /* ------ Βασικό στυλ ------ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; }
-        #map { height: 38vh; width: 100%; border-bottom: 3px solid #e94560; }
-        #controls {
-            padding: 8px 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
-            background: #16213e;
-        }
-        button {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            flex: 1 1 auto;
-            min-width: 60px;
-        }
+        #map { height: 35vh; width: 100%; border-bottom: 3px solid #e94560; }
+        #controls { padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; background: #16213e; }
+        button { padding: 5px 10px; border: none; border-radius: 30px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1 1 auto; min-width: 50px; }
         button:active { transform: scale(0.95); }
         .btn-gps { background: #4CAF50; color: white; }
         .btn-avg { background: #2196F3; color: white; }
@@ -39,95 +24,39 @@
         .btn-csv { background: #9c27b0; color: white; }
         .btn-map { background: #8bc34a; color: #1a1a2e; }
         .btn-clear { background: #533483; color: white; }
-        #info {
-            padding: 8px 12px;
-            background: #0f3460;
-            margin: 6px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            line-height: 1.5;
-            min-height: 50px;
-        }
+        .btn-ref { background: #00bcd4; color: white; }
+        #info { padding: 6px 10px; background: #0f3460; margin: 4px 6px; border-radius: 8px; font-size: 11px; line-height: 1.4; min-height: 40px; }
         #info strong { color: #e94560; }
-        #status {
-            padding: 5px 10px;
-            margin: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            text-align: center;
-            background: #1a1a2e;
-        }
-        #progress-bar {
-            width: 100%;
-            height: 3px;
-            background: #333;
-            border-radius: 2px;
-            margin: 3px 0;
-            overflow: hidden;
-            display: none;
-        }
-        #progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #4CAF50, #8bc34a);
-            border-radius: 2px;
-            transition: width 0.3s;
-        }
-        #settings {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 6px 12px;
-            background: #16213e;
-            margin: 4px 8px;
-            border-radius: 8px;
-            align-items: center;
-            font-size: 12px;
-        }
-        #settings label { display: flex; align-items: center; gap: 4px; }
-        #settings input[type="number"] {
-            width: 50px;
-            padding: 2px 4px;
-            border-radius: 4px;
-            border: none;
-            background: #1a1a2e;
-            color: white;
-            font-size: 12px;
-            text-align: center;
-        }
-        #coords-list {
-            padding: 4px 8px;
-            max-height: 110px;
-            overflow-y: auto;
-            background: #16213e;
-            margin: 0 8px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-family: monospace;
-        }
-        #coords-list div { padding: 2px 0; border-bottom: 1px solid #2a3a5e; display: flex; align-items: center; gap: 6px; }
-        .badge { display: inline-block; padding: 0 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+        #status { padding: 4px 8px; margin: 3px 6px; border-radius: 6px; font-size: 11px; font-weight: bold; text-align: center; background: #1a1a2e; }
+        #progress-bar { width: 100%; height: 3px; background: #333; border-radius: 2px; margin: 2px 0; overflow: hidden; display: none; }
+        #progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #4CAF50, #8bc34a); border-radius: 2px; transition: width 0.3s; }
+        #settings { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px; background: #16213e; margin: 3px 6px; border-radius: 6px; align-items: center; font-size: 10px; }
+        #settings label { display: flex; align-items: center; gap: 3px; }
+        #settings input[type="number"] { width: 40px; padding: 1px 3px; border-radius: 4px; border: none; background: #1a1a2e; color: white; font-size: 10px; text-align: center; }
+        #settings input[type="text"] { width: 70px; padding: 1px 3px; border-radius: 4px; border: none; background: #1a1a2e; color: white; font-size: 10px; }
+        #coords-list { padding: 4px 6px; max-height: 100px; overflow-y: auto; background: #16213e; margin: 0 6px 6px; border-radius: 6px; font-size: 10px; font-family: monospace; }
+        #coords-list div { padding: 2px 0; border-bottom: 1px solid #2a3a5e; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .badge { display: inline-block; padding: 0 6px; border-radius: 20px; font-size: 9px; font-weight: bold; }
         .badge-green { background: #4CAF50; color: white; }
         .badge-orange { background: #ff9800; color: white; }
         .badge-red { background: #f44336; color: white; }
-        .detail { color: #aaa; font-size: 10px; margin-left: auto; }
-        .area-display { background: #0f3460; padding: 4px 12px; border-radius: 20px; font-weight: bold; color: #ff9800; }
-        @media (max-width: 600px) {
-            button { font-size: 10px; padding: 5px 8px; min-width: 50px; }
-            #info { font-size: 11px; padding: 6px; }
-            #settings { font-size: 11px; }
-        }
+        .detail { color: #aaa; font-size: 9px; margin-left: auto; }
+        .area-display { background: #0f3460; padding: 2px 10px; border-radius: 20px; font-weight: bold; color: #ff9800; font-size: 11px; }
+        .ref-point { color: #00bcd4; }
+        @media (max-width: 600px) { button { font-size: 9px; padding: 4px 6px; min-width: 40px; } #info { font-size: 10px; } #settings { font-size: 9px; } }
     </style>
 </head>
 <body>
 
+    <!-- ΧΑΡΤΗΣ -->
     <div id="map"></div>
 
+    <!-- ΚΟΥΜΠΙΑ ΕΛΕΓΧΟΥ -->
     <div id="controls">
         <button class="btn-gps" onclick="getGPS()">📍 GPS</button>
-        <button class="btn-avg" onclick="startAverage()" id="avgBtn">📊 Μέσος Όρος</button>
-        <button class="btn-add" onclick="addPoint()" id="addBtn" disabled>➕ Προσθήκη</button>
+        <button class="btn-avg" onclick="startAverage()" id="avgBtn">📊 Μ.Ο.</button>
+        <button class="btn-add" onclick="addPoint()" id="addBtn" disabled>➕ Προσθ.</button>
+        <button class="btn-ref" onclick="showRefPoints()" id="refBtn">📍 Σημεία Αναφοράς</button>
         <button class="btn-dxf" onclick="exportDXF()">💾 DXF</button>
         <button class="btn-kmz" onclick="exportKMZ()">🌍 KMZ</button>
         <button class="btn-csv" onclick="exportCSV()">📊 CSV</button>
@@ -135,26 +64,31 @@
         <button class="btn-clear" onclick="clearAll()">🗑️ Καθαρισμός</button>
     </div>
 
+    <!-- ΚΑΤΑΣΤΑΣΗ & ΜΠΑΡΑ ΠΡΟΟΔΟΥ -->
     <div id="status">🟢 Έτοιμο</div>
     <div id="progress-bar"><div id="progress-bar-fill"></div></div>
 
+    <!-- ΡΥΘΜΙΣΕΙΣ -->
     <div id="settings">
         <label>🎯 Όριο ακρίβειας: <input type="number" id="maxAccInput" value="20" min="3" max="50" step="1"> m</label>
-        <label>⏹️ Διασπορά <input type="number" id="spreadStopInput" value="1" min="0.5" max="5" step="0.5"> m</label>
+        <label>⏹️ Διασπορά: <input type="number" id="spreadStopInput" value="1" min="0.5" max="5" step="0.5"> m</label>
+        <label>📝 Κωδικός: <input type="text" id="pointCodeInput" placeholder="π.χ. ST01"></label>
         <span id="areaDisplay" class="area-display">📐 Εμβαδό: 0.00 τ.μ.</span>
     </div>
 
+    <!-- ΠΛΗΡΟΦΟΡΙΕΣ -->
     <div id="info">
         <strong>📍 Θέση (ΕΓΣΑ87):</strong> <span id="currentPos">Αναμονή GPS...</span><br>
         <strong>📐 Σημεία:</strong> <span id="pointCount">0</span> &nbsp;|&nbsp; <strong>🛰️ Δορυφόροι:</strong> <span id="satCount">-</span>
-        <span id="extraInfo" style="display:block;margin-top:2px;font-size:11px;color:#aaa;"></span>
+        <span id="extraInfo" style="display:block;margin-top:2px;font-size:10px;color:#aaa;"></span>
     </div>
 
+    <!-- ΛΙΣΤΑ ΣΗΜΕΙΩΝ -->
     <div id="coords-list"></div>
 
     <script>
         // ============================================================
-        // 1. ΜΕΤΑΤΡΟΠΗ WGS84 -> ΕΓΣΑ87
+        // 1. ΜΕΤΑΤΡΟΠΗ WGS84 <-> ΕΓΣΑ87
         // ============================================================
         function wgs84ToEGSA87(lat, lon) {
             const a = 6378137.0, f = 1/298.257223563, e2 = 2*f - f*f;
@@ -167,7 +101,7 @@
         }
 
         // ============================================================
-        // 2. ΕΜΒΑΔΟΝ ΠΟΛΥΓΩΝΟΥ (Shoelace)
+        // 2. ΥΠΟΛΟΓΙΣΜΟΙ: Εμβαδόν, Απόσταση, Αζιμούθιο
         // ============================================================
         function calculateArea(pts) {
             if (pts.length < 3) return 0;
@@ -177,7 +111,19 @@
                 area += pts[i].x * pts[j].y;
                 area -= pts[j].x * pts[i].y;
             }
-            return Math.abs(area) / 2; // τετραγωνικά μέτρα
+            return Math.abs(area) / 2;
+        }
+
+        function calculateDistance(p1, p2) {
+            const dx = p1.x - p2.x, dy = p1.y - p2.y;
+            return Math.sqrt(dx*dx + dy*dy);
+        }
+
+        function calculateAzimuth(p1, p2) {
+            const dx = p2.x - p1.x, dy = p2.y - p1.y;
+            let az = Math.atan2(dx, dy) * 180 / Math.PI;
+            if (az < 0) az += 360;
+            return az;
         }
 
         // ============================================================
@@ -190,32 +136,20 @@
         let avgReadings = [];
         let isAveraging = false;
         let mapLayer = 'osm';
+        let refMarkers = []; // για τα σημεία αναφοράς
 
-        const AVG_DURATION = 10000; // 10 sec max
         let MAX_ACCURACY = 20;
         let SPREAD_STOP = 1.0;
 
-        // Φόρτωση αποθηκευμένων από localStorage
+        // ---------- Φόρτωση / Αποθήκευση ----------
         function loadState() {
             try {
                 const saved = localStorage.getItem('gpsPolygonPoints');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        polygonPoints = parsed;
-                        updateDisplay();
-                        drawPolygon();
-                        setStatus(`📂 Φορτώθηκαν ${polygonPoints.length} σημεία`, 'white');
-                    }
-                }
-                const acc = localStorage.getItem('gpsMaxAccuracy');
-                if (acc) { MAX_ACCURACY = parseFloat(acc); document.getElementById('maxAccInput').value = MAX_ACCURACY; }
-                const sp = localStorage.getItem('gpsSpreadStop');
-                if (sp) { SPREAD_STOP = parseFloat(sp); document.getElementById('spreadStopInput').value = SPREAD_STOP; }
+                if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed) && parsed.length > 0) { polygonPoints = parsed; updateDisplay(); drawPolygon(); setStatus(`📂 Φορτώθηκαν ${polygonPoints.length} σημεία`, 'white'); } }
+                const acc = localStorage.getItem('gpsMaxAccuracy'); if (acc) { MAX_ACCURACY = parseFloat(acc); document.getElementById('maxAccInput').value = MAX_ACCURACY; }
+                const sp = localStorage.getItem('gpsSpreadStop'); if (sp) { SPREAD_STOP = parseFloat(sp); document.getElementById('spreadStopInput').value = SPREAD_STOP; }
             } catch(e) {}
         }
-
-        // Αποθήκευση κατάστασης
         function saveState() {
             try {
                 localStorage.setItem('gpsPolygonPoints', JSON.stringify(polygonPoints));
@@ -225,43 +159,30 @@
         }
 
         // ============================================================
-        // 4. ΧΑΡΤΗΣ
+        // 4. ΧΑΡΤΗΣ & ΕΝΑΛΛΑΓΗ
         // ============================================================
         function initMap() {
             const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
             const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© ESRI' });
-
             const saved = localStorage.getItem('gpsMapLayer');
             mapLayer = (saved === 'satellite') ? 'satellite' : 'osm';
             const initialLayer = (mapLayer === 'satellite') ? satellite : osm;
             map = L.map('map', { layers: [initialLayer] }).setView([38.0, 23.7], 7);
             map._layers = { osm, satellite };
             document.getElementById('mapBtn').innerHTML = (mapLayer === 'satellite') ? '🗺️ Χάρτης' : '🛰️ Δορυφόρος';
-
-            // Φόρτωση αποθηκευμένων σημείων και σχεδίαση
             loadState();
             if (polygonPoints.length > 0) drawPolygon();
         }
 
-        // ============================================================
-        // 5. ΕΝΑΛΛΑΓΗ ΧΑΡΤΗ
-        // ============================================================
         function toggleMap() {
             const osm = map._layers.osm, sat = map._layers.satellite;
-            if (mapLayer === 'osm') {
-                map.removeLayer(osm); map.addLayer(sat);
-                mapLayer = 'satellite';
-                document.getElementById('mapBtn').innerHTML = '🗺️ Χάρτης';
-            } else {
-                map.removeLayer(sat); map.addLayer(osm);
-                mapLayer = 'osm';
-                document.getElementById('mapBtn').innerHTML = '🛰️ Δορυφόρος';
-            }
+            if (mapLayer === 'osm') { map.removeLayer(osm); map.addLayer(sat); mapLayer = 'satellite'; document.getElementById('mapBtn').innerHTML = '🗺️ Χάρτης'; }
+            else { map.removeLayer(sat); map.addLayer(osm); mapLayer = 'osm'; document.getElementById('mapBtn').innerHTML = '🛰️ Δορυφόρος'; }
             localStorage.setItem('gpsMapLayer', mapLayer);
         }
 
         // ============================================================
-        // 6. GPS (άμεσο)
+        // 5. GPS & ΕΠΕΞΕΡΓΑΣΙΑ
         // ============================================================
         function getGPS() {
             if (!navigator.geolocation) { setStatus('❌ GPS δεν υποστηρίζεται', 'red'); return; }
@@ -273,20 +194,19 @@
             );
         }
 
-        // ============================================================
-        // 7. ΕΠΕΞΕΡΓΑΣΙΑ ΜΕΤΡΗΣΗΣ
-        // ============================================================
         function processPosition(pos) {
             const lat = pos.coords.latitude, lon = pos.coords.longitude;
             const alt = pos.coords.altitude, acc = pos.coords.accuracy;
-            const sats = pos.coords.satellites || null; // μπορεί να μην υπάρχει
+            const sats = pos.coords.satellites || null;
             const eg = wgs84ToEGSA87(lat, lon);
+            const code = document.getElementById('pointCodeInput').value.trim() || '';
 
             currentPos = {
                 lat, lon, x: eg.x, y: eg.y,
                 alt: alt !== null ? Math.round(alt*10)/10 : null,
                 acc: acc !== null ? Math.round(acc*10)/10 : null,
-                satellites: sats
+                satellites: sats,
+                code: code
             };
 
             updateInfo(currentPos);
@@ -295,20 +215,19 @@
 
             if (marker) map.removeLayer(marker);
             marker = L.marker([lat, lon]).addTo(map)
-                .bindPopup(`📍 ${eg.x}, ${eg.y}<br>Υψ.${currentPos.alt||'N/A'}m | ±${currentPos.acc||'N/A'}m<br>🛰️ ${sats||'N/A'}`)
+                .bindPopup(`📍 ${eg.x}, ${eg.y}<br>Υψ.${currentPos.alt||'N/A'}m | ±${currentPos.acc||'N/A'}m<br>🛰️ ${sats||'N/A'}${code ? ' | Κωδ.: '+code : ''}`)
                 .openPopup();
             map.setView([lat, lon], 15);
             setStatus('✅ Θέση λήφθηκε', 'green');
         }
 
         // ============================================================
-        // 8. ΜΕΣΟΣ ΟΡΟΣ (με διακοπή από διασπορά)
+        // 6. ΜΕΣΟΣ ΟΡΟΣ (με διακοπή από διασπορά)
         // ============================================================
         function startAverage() {
             if (isAveraging) return;
             if (!navigator.geolocation) { setStatus('❌ GPS δεν υποστηρίζεται', 'red'); return; }
 
-            // Διάβασε ρυθμίσεις
             MAX_ACCURACY = parseFloat(document.getElementById('maxAccInput').value) || 20;
             SPREAD_STOP = parseFloat(document.getElementById('spreadStopInput').value) || 1.0;
             localStorage.setItem('gpsMaxAccuracy', MAX_ACCURACY);
@@ -341,7 +260,6 @@
                         satellites: sats
                     });
 
-                    // Υπολογισμός διασποράς (τυπική απόκλιση X,Y)
                     if (avgReadings.length >= 3) {
                         const n = avgReadings.length;
                         const meanX = avgReadings.reduce((s,r) => s+r.x, 0)/n;
@@ -352,7 +270,6 @@
                         const spread = (stdX + stdY) / 2;
                         lastSpread = spread;
 
-                        // Αν η διασπορά είναι κάτω από το όριο, σταματάμε
                         if (spread < SPREAD_STOP) {
                             setStatus(`⏹️ Διασπορά ${spread.toFixed(2)}m < ${SPREAD_STOP}m -> σταμάτημα`, 'green');
                             stopAveraging(true);
@@ -361,7 +278,7 @@
                     }
 
                     const elapsed = Date.now() - startTime;
-                    const pct = Math.min(100, Math.round((elapsed / AVG_DURATION) * 100));
+                    const pct = Math.min(100, Math.round((elapsed / 10000) * 100));
                     document.getElementById('progress-bar-fill').style.width = pct + '%';
                     setStatus(`⏳ Συλλογή... ${avgReadings.length} μετρήσεις (${pct}%) | διασπορά ${lastSpread.toFixed(2)}m`, 'orange');
                 },
@@ -372,15 +289,9 @@
                 { enableHighAccuracy: true, timeout: 5000 }
             );
 
-            // Timeout ασφαλείας
-            setTimeout(() => {
-                if (isAveraging) stopAveraging(true);
-            }, AVG_DURATION);
+            setTimeout(() => { if (isAveraging) stopAveraging(true); }, 10000);
         }
 
-        // ============================================================
-        // 9. ΣΤΑΜΑΤΗΜΑ ΜΕΣΟΥ ΟΡΟΥ
-        // ============================================================
         function stopAveraging(calculate) {
             if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             isAveraging = false;
@@ -408,11 +319,12 @@
             const avgAcc = Math.round((sumAcc/n)*10)/10;
             const avgSats = satsCount > 0 ? Math.round(sumSats/satsCount) : null;
 
-            // Διασπορά
             let stdX = 0, stdY = 0;
             avgReadings.forEach(r => { stdX += (r.x - avgX)**2; stdY += (r.y - avgY)**2; });
             stdX = Math.sqrt(stdX/n); stdY = Math.sqrt(stdY/n);
             const spread = (stdX + stdY) / 2;
+
+            const code = document.getElementById('pointCodeInput').value.trim() || '';
 
             currentPos = {
                 lat: avgReadings.reduce((s,r) => s+r.lat, 0)/n,
@@ -421,6 +333,7 @@
                 alt: avgAlt,
                 acc: avgAcc,
                 satellites: avgSats,
+                code: code,
                 isAverage: true,
                 spread: spread,
                 readings: n
@@ -436,26 +349,29 @@
             marker = L.marker([currentPos.lat, currentPos.lon], {
                 icon: L.divIcon({ html: '⭐', className: 'custom-marker', iconSize: [30,30] })
             }).addTo(map)
-                .bindPopup(`📊 Μέσος Όρος<br>X=${avgX}, Y=${avgY}<br>Υψ.${avgAlt||'N/A'}m<br>Ακρ. ±${avgAcc}m<br>Διασπορά ±${spread.toFixed(2)}m<br>🛰️ ${avgSats||'N/A'}`)
+                .bindPopup(`📊 Μέσος Όρος<br>X=${avgX}, Y=${avgY}<br>Υψ.${avgAlt||'N/A'}m<br>Ακρ. ±${avgAcc}m<br>Διασπορά ±${spread.toFixed(2)}m<br>🛰️ ${avgSats||'N/A'}${code ? ' | Κωδ.: '+code : ''}`)
                 .openPopup();
             map.setView([currentPos.lat, currentPos.lon], 15);
             avgReadings = [];
         }
 
         // ============================================================
-        // 10. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
+        // 7. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
         // ============================================================
         function addPoint() {
             if (!currentPos) { alert('Πάρε πρώτα GPS ή Μέσο Όρο!'); return; }
-            polygonPoints.push({ ...currentPos });
+            const code = document.getElementById('pointCodeInput').value.trim() || '';
+            const pointToAdd = { ...currentPos, code: code };
+            polygonPoints.push(pointToAdd);
             saveState();
             updateDisplay();
             drawPolygon();
-            setStatus(`➕ Προστέθηκε σημείο #${polygonPoints.length}`, 'green');
+            setStatus(`➕ Προστέθηκε σημείο #${polygonPoints.length}${code ? ' ('+code+')' : ''}`, 'green');
+            document.getElementById('pointCodeInput').value = ''; // καθαρισμός μετά την προσθήκη
         }
 
         // ============================================================
-        // 11. ΣΧΕΔΙΑΣΗ ΠΟΛΥΓΩΝΟΥ
+        // 8. ΣΧΕΔΙΑΣΗ ΠΟΛΥΓΩΝΟΥ & ΕΜΒΑΔΟ
         // ============================================================
         function drawPolygon() {
             const ll = polygonPoints.map(p => [p.lat, p.lon]);
@@ -468,7 +384,6 @@
                 polyline = L.polyline(ll, { color: '#e94560', weight: 3 }).addTo(map);
                 if (ll.length >= 3) {
                     polygonLayer = L.polygon(ll, { color: '#e94560', fillColor: '#e94560', fillOpacity: 0.2 }).addTo(map);
-                    // Υπολογισμός εμβαδού
                     const area = calculateArea(polygonPoints);
                     document.getElementById('areaDisplay').innerHTML = `📐 Εμβαδό: ${area.toFixed(2)} τ.μ. (${(area/1000).toFixed(2)} στρ.)`;
                 } else {
@@ -479,16 +394,17 @@
         }
 
         // ============================================================
-        // 12. ΕΝΗΜΕΡΩΣΗ UI
+        // 9. ΕΝΗΜΕΡΩΣΗ UI
         // ============================================================
         function updateInfo(pos) {
             let altText = pos.alt !== null ? `${pos.alt} m` : 'N/A';
             let accText = pos.acc !== null ? `±${pos.acc} m` : 'N/A';
             let satText = pos.satellites !== null ? pos.satellites : 'N/A';
+            let codeText = pos.code ? ` | Κωδ.: ${pos.code}` : '';
             document.getElementById('currentPos').innerHTML =
-                `X=${pos.x} m, Y=${pos.y} m &nbsp; <span style="font-size:11px;color:#aaa;">(${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)})</span>`;
+                `X=${pos.x} m, Y=${pos.y} m &nbsp; <span style="font-size:10px;color:#aaa;">(${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)})</span>`;
             document.getElementById('extraInfo').innerHTML =
-                `📏 Υψόμετρο: ${altText} &nbsp;|&nbsp; 🎯 Ακρίβεια: ${accText}` +
+                `📏 Υψόμετρο: ${altText} &nbsp;|&nbsp; 🎯 Ακρίβεια: ${accText}${codeText}` +
                 (pos.isAverage ? ` &nbsp;|&nbsp; 📊 Μέσος από ${pos.readings} μετρήσεις, διασπορά ±${pos.spread.toFixed(2)}m` : '');
             document.getElementById('satCount').innerText = satText;
         }
@@ -500,12 +416,13 @@
                 let altTxt = p.alt !== null ? `${p.alt}m` : 'N/A';
                 let accTxt = p.acc !== null ? `±${p.acc}m` : 'N/A';
                 let satTxt = p.satellites !== null ? p.satellites : 'N/A';
+                let codeTxt = p.code ? ` (${p.code})` : '';
                 let badgeClass = p.acc < 5 ? 'badge-green' : (p.acc < 15 ? 'badge-orange' : 'badge-red');
                 let badgeLabel = p.acc < 5 ? '✅' : (p.acc < 15 ? '🟡' : '🔴');
                 let isAvg = p.isAverage ? '⭐ ' : '';
                 return `<div>
                     <span class="badge ${badgeClass}">${badgeLabel}</span>
-                    ${isAvg}#${i+1} → X=${p.x}m, Y=${p.y}m
+                    ${isAvg}#${i+1} → X=${p.x}m, Y=${p.y}m${codeTxt}
                     <span class="detail">Υψ.${altTxt} | ${accTxt} | 🛰️${satTxt}</span>
                 </div>`;
             }).join('');
@@ -518,19 +435,214 @@
         }
 
         // ============================================================
+        // 10. ΣΗΜΕΙΑ ΑΝΑΦΟΡΑΣ (από dataset)
+        // ============================================================
+        async function showRefPoints() {
+            const btn = document.getElementById('refBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Φόρτωση...';
+            setStatus('⏳ Φόρτωση σημείων αναφοράς...', 'orange');
+
+            try {
+                // Φόρτωση του crowd-sourced dataset από το Zenodo
+                const response = await fetch('https://zenodo.org/records/18863833/files/points.csv?download=1');
+                if (!response.ok) throw new Error('Απέτυχε η λήψη του dataset');
+                const csvText = await response.text();
+
+                // Αφαίρεση τυχόν BOM και διάσπαση σε γραμμές
+                const lines = csvText.replace(/^\uFEFF/, '').split('\n').filter(line => line.trim() !== '');
+                const headers = lines[0].split(',');
+                const latIdx = headers.indexOf('lat');
+                const lonIdx = headers.indexOf('lon');
+                const nameIdx = headers.indexOf('name');
+                const idIdx = headers.indexOf('gys_id');
+                const elevIdx = headers.indexOf('elevation');
+                const orderIdx = headers.indexOf('order');
+
+                if (latIdx === -1 || lonIdx === -1) {
+                    throw new Error('Το αρχείο CSV δεν έχει στήλες lat/lon');
+                }
+
+                // Αφαίρεση παλαιών σημείων αναφοράς
+                refMarkers.forEach(m => map.removeLayer(m));
+                refMarkers = [];
+
+                let count = 0;
+                const bounds = map.getBounds();
+                const center = bounds.getCenter();
+                const radiusDeg = 0.5; // περίπου 55 km
+
+                for (let i = 1; i < lines.length && count < 200; i++) {
+                    const cols = lines[i].split(',');
+                    if (cols.length < Math.max(latIdx, lonIdx) + 1) continue;
+                    const lat = parseFloat(cols[latIdx]);
+                    const lon = parseFloat(cols[lonIdx]);
+                    if (isNaN(lat) || isNaN(lon)) continue;
+
+                    // Φιλτράρισμα σε ακτίνα ~55km από το κέντρο του χάρτη
+                    const dLat = lat - center.lat;
+                    const dLon = lon - center.lng;
+                    if (Math.abs(dLat) > radiusDeg || Math.abs(dLon) > radiusDeg) continue;
+
+                    const name = (nameIdx !== -1 && cols[nameIdx]) ? cols[nameIdx] : '';
+                    const gysId = (idIdx !== -1 && cols[idIdx]) ? cols[idIdx] : '';
+                    const elev = (elevIdx !== -1 && cols[elevIdx]) ? cols[elevIdx] : '';
+                    const order = (orderIdx !== -1 && cols[orderIdx]) ? cols[orderIdx] : '';
+
+                    const popupContent = `
+                        <b>📍 ${name || 'Τριγωνομετρικό'}</b><br>
+                        <b>ID:</b> ${gysId}<br>
+                        <b>Υψόμετρο:</b> ${elev || 'N/A'} m<br>
+                        <b>Τάξη:</b> ${order || 'N/A'}<br>
+                        <b>Συντεταγμένες:</b><br>
+                        WGS84: ${lat.toFixed(5)}, ${lon.toFixed(5)}
+                    `;
+
+                    const marker = L.marker([lat, lon], {
+                        icon: L.divIcon({
+                            html: '📍',
+                            className: 'ref-marker',
+                            iconSize: [20, 20]
+                        })
+                    }).addTo(map)
+                      .bindPopup(popupContent);
+
+                    refMarkers.push(marker);
+                    count++;
+                }
+
+                setStatus(`✅ Εμφανίστηκαν ${count} σημεία αναφοράς κοντά στην περιοχή σας`, 'green');
+                btn.textContent = '📍 Σημεία Αναφοράς';
+                btn.disabled = false;
+
+                if (count === 0) {
+                    alert('Δεν βρέθηκαν σημεία αναφοράς κοντά στην τρέχουσα περιοχή του χάρτη. Μετακινήστε τον χάρτη και δοκιμάστε ξανά.');
+                }
+
+            } catch (error) {
+                console.error(error);
+                setStatus('❌ Σφάλμα φόρτωσης σημείων αναφοράς', 'red');
+                alert('Απέτυχε η φόρτωση των σημείων αναφοράς. Ελέγξτε τη σύνδεσή σας στο διαδίκτυο.');
+                btn.textContent = '📍 Σημεία Αναφοράς';
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================================
+        // 11. ΕΞΑΓΩΓΗ DXF (με Blocks & Κωδικούς)
+        // ============================================================
+        function exportDXF() {
+            if (polygonPoints.length === 0) { alert('Δεν υπάρχουν σημεία!'); return; }
+
+            let dxf = `0\nSECTION\n2\nENTITIES\n`;
+
+            // ---- 11a. Blocks για κάθε σημείο (κύκλος + κείμενο) ----
+            polygonPoints.forEach((p, i) => {
+                const code = p.code || `P${i+1}`;
+                const z = (p.alt !== null) ? p.alt : 0;
+                // Block definition
+                dxf += `0\nBLOCK\n8\n0\n2\nPT${i+1}\n70\n0\n10\n0\n20\n0\n30\n0\n`;
+                // Κύκλος (σημείο)
+                dxf += `0\nCIRCLE\n8\n0\n10\n0\n20\n0\n30\n0\n40\n1.5\n`;
+                // Κείμενο (κωδικός)
+                dxf += `0\nTEXT\n8\n0\n10\n2.5\n20\n-1.5\n30\n0\n40\n1.0\n1\n${code}\n`;
+                dxf += `0\nENDBLK\n`;
+            });
+
+            // ---- 11b. Insert των blocks στις θέσεις τους ----
+            polygonPoints.forEach((p, i) => {
+                const z = (p.alt !== null) ? p.alt : 0;
+                dxf += `0\nINSERT\n8\n0\n2\nPT${i+1}\n10\n${p.x}\n20\n${p.y}\n30\n${z}\n`;
+            });
+
+            // ---- 11c. Πολύγωνο (LWPOLYLINE) ----
+            if (polygonPoints.length >= 3) {
+                dxf += `0\nLWPOLYLINE\n8\n0\n90\n${polygonPoints.length}\n70\n1\n`;
+                polygonPoints.forEach(p => {
+                    const z = (p.alt !== null) ? p.alt : 0;
+                    dxf += `10\n${p.x}\n20\n${p.y}\n38\n${z}\n`;
+                });
+            }
+
+            dxf += `0\nENDSEC\n0\nEOF\n`;
+
+            const blob = new Blob([dxf], { type: 'application/dxf' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `polygon_${new Date().toISOString().slice(0,10)}.dxf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert('✅ DXF με blocks κατέβηκε!');
+        }
+
+        // ============================================================
+        // 12. ΕΞΑΓΩΓΗ KMZ (με κωδικούς)
+        // ============================================================
+        function exportKMZ() {
+            if (polygonPoints.length < 3) { alert('⚠️ Χρειάζονται ≥3 σημεία!'); return; }
+            let kml = `<?xml version="1.0" encoding="UTF-8"?>
+        <kml xmlns="http://www.opengis.net/kml/2.2">
+          <Document>
+            <name>Πολύγωνο GPS</name>
+            <description>Δημιουργήθηκε με Greek Grid GPS Pro</description>`;
+            polygonPoints.forEach((p, i) => {
+                const alt = (p.alt !== null) ? p.alt : 0;
+                const code = p.code || `P${i+1}`;
+                const label = p.isAverage ? ' (Μέσος Όρος)' : '';
+                kml += `
+            <Placemark>
+              <name>${code}${label}</name>
+              <description>X=${p.x} Y=${p.y} | Υψόμετρο: ${alt}m</description>
+              <Point>
+                <coordinates>${p.lon},${p.lat},${alt}</coordinates>
+              </Point>
+            </Placemark>`;
+            });
+            const coords = polygonPoints.map(p => {
+                const alt = (p.alt !== null) ? p.alt : 0;
+                return `${p.lon},${p.lat},${alt}`;
+            }).join(' ');
+            kml += `
+            <Placemark>
+              <name>Πολύγωνο</name>
+              <Polygon>
+                <outerBoundaryIs>
+                  <LinearRing>
+                    <coordinates>${coords}</coordinates>
+                  </LinearRing>
+                </outerBoundaryIs>
+              </Polygon>
+            </Placemark>
+          </Document>
+        </kml>`;
+            const zip = new JSZip();
+            zip.file("polygon.kml", kml);
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = `polygon_${new Date().toISOString().slice(0,10)}.kmz`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                alert('✅ KMZ κατέβηκε!');
+            });
+        }
+
+        // ============================================================
         // 13. ΕΞΑΓΩΓΗ CSV
         // ============================================================
         function exportCSV() {
             if (polygonPoints.length === 0) { alert('Δεν υπάρχουν σημεία!'); return; }
-            let csv = '#,X,Y,Υψόμετρο,Ακρίβεια,Δορυφόροι,Μέσος_Όρος\n';
+            let csv = '#,Κωδικός,X,Y,Υψόμετρο,Ακρίβεια,Δορυφόροι,Μέσος_Όρος\n';
             polygonPoints.forEach((p, i) => {
                 const alt = p.alt !== null ? p.alt : '';
                 const acc = p.acc !== null ? p.acc : '';
                 const sats = p.satellites !== null ? p.satellites : '';
                 const isAvg = p.isAverage ? 'ΝΑΙ' : 'ΟΧΙ';
-                csv += `${i+1},${p.x},${p.y},${alt},${acc},${sats},${isAvg}\n`;
+                const code = p.code || '';
+                csv += `${i+1},${code},${p.x},${p.y},${alt},${acc},${sats},${isAvg}\n`;
             });
-            // Προσθήκη εμβαδού στο τέλος
             if (polygonPoints.length >= 3) {
                 const area = calculateArea(polygonPoints);
                 csv += `\nΕμβαδό,${area.toFixed(2)} τ.μ.,${(area/1000).toFixed(2)} στρέμματα\n`;
@@ -546,80 +658,7 @@
         }
 
         // ============================================================
-        // 14. ΕΞΑΓΩΓΗ DXF
-        // ============================================================
-        function exportDXF() {
-            if (polygonPoints.length < 3) { alert('⚠️ Χρειάζονται ≥3 σημεία!'); return; }
-            let dxf = `0\nSECTION\n2\nENTITIES\n0\nLWPOLYLINE\n8\n0\n90\n${polygonPoints.length}\n70\n1\n`;
-            polygonPoints.forEach(p => {
-                const z = (p.alt !== null) ? p.alt : 0;
-                dxf += `10\n${p.x}\n20\n${p.y}\n38\n${z}\n`;
-            });
-            dxf += `0\nENDSEC\n0\nEOF\n`;
-            const blob = new Blob([dxf], { type: 'application/dxf' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `polygon_${new Date().toISOString().slice(0,10)}.dxf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            alert('✅ DXF κατέβηκε!');
-        }
-
-        // ============================================================
-        // 15. ΕΞΑΓΩΓΗ KMZ
-        // ============================================================
-        function exportKMZ() {
-            if (polygonPoints.length < 3) { alert('⚠️ Χρειάζονται ≥3 σημεία!'); return; }
-            let kml = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Πολύγωνο GPS</name>
-    <description>Δημιουργήθηκε με Greek Grid GPS Pro</description>`;
-            polygonPoints.forEach((p, i) => {
-                const alt = (p.alt !== null) ? p.alt : 0;
-                const label = p.isAverage ? ' (Μέσος Όρος)' : '';
-                kml += `
-    <Placemark>
-      <name>Σημείο ${i+1}${label}</name>
-      <description>X=${p.x} Y=${p.y} | Υψόμετρο: ${alt}m</description>
-      <Point>
-        <coordinates>${p.lon},${p.lat},${alt}</coordinates>
-      </Point>
-    </Placemark>`;
-            });
-            const coords = polygonPoints.map(p => {
-                const alt = (p.alt !== null) ? p.alt : 0;
-                return `${p.lon},${p.lat},${alt}`;
-            }).join(' ');
-            kml += `
-    <Placemark>
-      <name>Πολύγωνο</name>
-      <Polygon>
-        <outerBoundaryIs>
-          <LinearRing>
-            <coordinates>${coords}</coordinates>
-          </LinearRing>
-        </outerBoundaryIs>
-      </Polygon>
-    </Placemark>
-  </Document>
-</kml>`;
-            const zip = new JSZip();
-            zip.file("polygon.kml", kml);
-            zip.generateAsync({ type: "blob" }).then(function(content) {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(content);
-                a.download = `polygon_${new Date().toISOString().slice(0,10)}.kmz`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                alert('✅ KMZ κατέβηκε!');
-            });
-        }
-
-        // ============================================================
-        // 16. ΚΑΘΑΡΙΣΜΟΣ
+        // 14. ΚΑΘΑΡΙΣΜΟΣ
         // ============================================================
         function clearAll() {
             if (polygonPoints.length > 0 && !confirm('Σβήσιμο όλων των σημείων;')) return;
@@ -633,20 +672,26 @@
             document.getElementById('extraInfo').innerHTML = '';
             document.getElementById('satCount').innerText = '-';
             document.getElementById('areaDisplay').innerHTML = '📐 Εμβαδό: 0.00 τ.μ.';
+            document.getElementById('pointCodeInput').value = '';
             setStatus('🟢 Έτοιμο', 'white');
             if (marker) map.removeLayer(marker);
             if (polyline) map.removeLayer(polyline);
             if (polygonLayer) map.removeLayer(polygonLayer);
             marker = polyline = polygonLayer = null;
+            // Αφαίρεση σημείων αναφοράς
+            refMarkers.forEach(m => map.removeLayer(m));
+            refMarkers = [];
             if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             isAveraging = false;
             avgReadings = [];
             document.getElementById('avgBtn').disabled = false;
             document.getElementById('progress-bar').style.display = 'none';
+            document.getElementById('refBtn').textContent = '📍 Σημεία Αναφοράς';
+            document.getElementById('refBtn').disabled = false;
         }
 
         // ============================================================
-        // 17. ΕΚΚΙΝΗΣΗ
+        // 15. ΕΚΚΙΝΗΣΗ
         // ============================================================
         window.onload = initMap;
     </script>
