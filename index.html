@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.20.9/proj4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shpjs/6.2.0/shp.min.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -70,16 +72,29 @@
             font-weight: 850;
         }
         .control-button {
-            min-height: 56px;
+            min-height: 58px;
             padding: 10px 8px;
             font-size: 15px;
             line-height: 1.2;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             text-align: center;
             white-space: normal;
+        }
+        .button-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            font-size: 25px;
+            line-height: 1;
+            font-weight: 900;
+        }
+        .triangle-icon {
+            font-size: 30px;
+            transform: translateY(-1px);
         }
         .control-button:active { transform: scale(0.97); }
         .control-button:hover { filter: brightness(1.08); }
@@ -94,6 +109,10 @@
         .btn-clear { background: #533483; color: white; }
         .btn-ref { background: #00bcd4; color: white; }
         .btn-upload { background: #ff5722; color: white; }
+        .btn-import-kmz { background: #ef6c00; color: white; }
+        .btn-import-shp { background: #00695c; color: white; }
+        .btn-import-clear { background: #6d4c41; color: white; }
+        .secondary-import-row { margin-top: 10px; }
 
         #status {
             padding: 7px 9px;
@@ -204,11 +223,11 @@
             -webkit-overflow-scrolling: touch;
         }
         .point-row {
-            min-width: 720px;
+            min-width: 790px;
             padding: 8px 5px;
             border-bottom: 1px solid #2a3a5e;
             display: grid;
-            grid-template-columns: auto 1fr auto;
+            grid-template-columns: auto 1fr auto auto;
             align-items: center;
             gap: 8px;
         }
@@ -225,20 +244,194 @@
             margin-left: 12px;
             white-space: nowrap;
         }
-        .delete-point-btn {
+        .point-action-btn {
             width: 38px;
             height: 38px;
             min-width: 38px;
             padding: 0;
             border-radius: 10px;
-            background: #c62828;
             color: white;
-            font-size: 17px;
+            font-size: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
-        .delete-point-btn:hover { filter: brightness(1.15); }
+        .edit-point-btn { background: #1976d2; }
+        .delete-point-btn { background: #c62828; }
+        .point-action-btn:hover { filter: brightness(1.15); }
+
+        .point-label {
+            background: rgba(15, 52, 96, 0.94);
+            border: 1px solid #ffffff;
+            border-radius: 6px;
+            color: #ffffff;
+            box-shadow: 0 1px 5px rgba(0,0,0,.45);
+            font-size: 11px;
+            font-weight: 900;
+            padding: 2px 5px;
+        }
+        .point-label::before { display: none; }
+        .side-length-label {
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid #e94560;
+            border-radius: 6px;
+            color: #691326;
+            font-size: 10px;
+            font-weight: 900;
+            line-height: 1;
+            padding: 3px 5px;
+            white-space: nowrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,.35);
+        }
+        .accuracy-circle-label {
+            color: #0c5c7d;
+            font-weight: 900;
+        }
+        .imported-popup-title {
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 900;
+            color: #0f3460;
+        }
+        .imported-popup-metrics {
+            margin: 6px 0;
+            padding: 6px 7px;
+            border-radius: 6px;
+            background: #eef4fb;
+            color: #17263b;
+            font-weight: 800;
+            line-height: 1.45;
+        }
+        .imported-popup-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+            font-size: 11px;
+        }
+        .imported-popup-table th,
+        .imported-popup-table td {
+            padding: 3px 4px;
+            border-bottom: 1px solid #d7deea;
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+        .imported-popup-table th { width: 40%; color: #324a68; }
+
+        #mapLegend {
+            display: none;
+            margin: 7px 7px 3px;
+            padding: 9px 10px;
+            background: #101a32;
+            border: 1px solid #41547e;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        #mapLegend.visible { display: block; }
+        .legend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 7px;
+            font-weight: 900;
+            color: #ffcf6e;
+        }
+        .legend-items { display: flex; flex-wrap: wrap; gap: 5px 10px; }
+        .legend-item { display: inline-flex; align-items: center; gap: 5px; color: #e8efff; }
+        .legend-swatch { width: 15px; height: 11px; border-radius: 2px; border: 1px solid rgba(255,255,255,.65); }
+        .legend-gradient { width: 120px; height: 10px; border-radius: 5px; border: 1px solid rgba(255,255,255,.7); }
+        .legend-note { margin-top: 6px; color: #bfc9df; font-size: 10px; }
+
+        .layer-section {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #40547c;
+        }
+        .layer-section-title {
+            margin-bottom: 8px;
+            color: #ffcf6e;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: .5px;
+        }
+        .layer-option-list { display: grid; gap: 7px; }
+        .layer-option {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            align-items: center;
+            gap: 8px;
+            min-height: 45px;
+            padding: 7px 10px;
+            border-radius: 9px;
+            background: #101a32;
+            border: 1px solid #344a74;
+        }
+        .layer-option input[type="checkbox"] { width: 20px; height: 20px; accent-color: #8bc34a; }
+        .layer-option-label { font-size: 13px; font-weight: 800; }
+        .layer-option-note { display: block; margin-top: 2px; color: #b9c5dc; font-size: 10px; font-weight: 600; }
+        .layer-badge { padding: 2px 6px; border-radius: 8px; background: #244264; color: #d9e9ff; font-size: 9px; font-weight: 900; }
+        .layer-badge.live { background: #1b5e20; color: #d9ffdc; }
+        .layer-badge.api { background: #6a4b12; color: #fff0bd; }
+        .opacity-panel {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 9px;
+            margin-top: 11px;
+            padding: 9px 10px;
+            background: #0d172c;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .opacity-panel input[type="range"] { width: 100%; accent-color: #8bc34a; }
+        .api-config {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 9px;
+            background: #0c1427;
+            border: 1px dashed #60749c;
+        }
+        .api-config label { display: block; font-size: 11px; font-weight: 800; margin-bottom: 5px; }
+        .api-config-row { display: flex; gap: 7px; }
+        .api-config input {
+            flex: 1;
+            min-width: 0;
+            height: 36px;
+            padding: 6px 8px;
+            border: 1px solid #52658f;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: white;
+            font-size: 11px;
+        }
+        .api-save-btn { padding: 6px 10px; background: #4caf50; color: white; border-radius: 7px; }
+        .external-layer-btn { padding: 5px 8px; background: #27618c; color: white; border-radius: 7px; font-size: 10px; }
+
+        #undoSnackbar {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            z-index: 5000;
+            display: none;
+            transform: translateX(-50%);
+            width: min(470px, calc(100% - 24px));
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #111b31;
+            border: 1px solid #6f82a9;
+            box-shadow: 0 8px 26px rgba(0,0,0,.48);
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 750;
+        }
+        #undoSnackbar.show { display: flex; }
+        #undoSnackbar button { padding: 7px 11px; background: #ff9800; color: #261600; border-radius: 8px; }
+
         .empty-points {
             padding: 12px;
             text-align: center;
@@ -345,7 +538,9 @@
             #map { height: 51vh; min-height: 320px; }
             #controls { padding: 10px 7px 12px; }
             .control-row, .clear-row { gap: 7px; }
-            .control-button { min-height: 58px; padding: 9px 5px; font-size: 13px; }
+            .control-button { min-height: 60px; padding: 9px 5px; font-size: 13px; gap: 5px; }
+            .button-icon { min-width: 23px; font-size: 22px; }
+            .triangle-icon { font-size: 27px; }
             .control-section-title { margin: 11px 0 8px; font-size: 13px; }
             #settings {
                 grid-template-columns: 1.35fr 1fr 1fr;
@@ -374,31 +569,39 @@
 </head>
 <body>
     <div id="map"></div>
+    <div id="mapLegend" aria-live="polite"></div>
 
     <div id="controls">
         <div class="control-row" aria-label="Βασικές λειτουργίες">
-            <button class="control-button btn-gps" onclick="getGPS()">📍 <span>Θέση GPS</span></button>
-            <button class="control-button btn-avg" onclick="startAverage()" id="avgBtn">📊 <span>Μέσος όρος</span></button>
-            <button class="control-button btn-add" onclick="addPoint()" id="addBtn" disabled>➕ <span>Προσθήκη σημείου</span></button>
+            <button class="control-button btn-gps" onclick="getGPS()"><span class="button-icon">📍</span><span>Θέση GPS</span></button>
+            <button class="control-button btn-avg" onclick="startAverage()" id="avgBtn"><span class="button-icon">📊</span><span>Μέσος όρος</span></button>
+            <button class="control-button btn-add" onclick="addPoint()" id="addBtn" disabled><span class="button-icon">➕</span><span>Προσθήκη σημείου</span></button>
         </div>
 
         <div class="control-section-title"><span>Εισαγωγή</span></div>
         <div class="control-row" aria-label="Λειτουργίες εισαγωγής">
-            <button class="control-button btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn">📍 <span>Τριγωνομετρικά</span></button>
-            <button class="control-button btn-upload" onclick="document.getElementById('csvUpload').click()">📤 <span>Φόρτωση CSV</span></button>
-            <button class="control-button btn-map" onclick="openMapMenu()" id="mapBtn">🗺️ <span id="mapBtnLabel">Επιλογή χάρτη</span></button>
+            <button class="control-button btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn"><span class="button-icon triangle-icon">△</span><span>Τριγωνομετρικά</span></button>
+            <button class="control-button btn-upload" onclick="document.getElementById('csvUpload').click()"><span class="button-icon">📤</span><span>Φόρτωση CSV</span></button>
+            <button class="control-button btn-map" onclick="openMapMenu()" id="mapBtn"><span class="button-icon">🗺️</span><span id="mapBtnLabel">Επιλογή χάρτη</span></button>
             <input type="file" id="csvUpload" accept=".csv,text/csv" hidden onchange="loadCustomRefPoints(event)">
+        </div>
+        <div class="control-row secondary-import-row" aria-label="Εισαγωγή πολυγώνων">
+            <button class="control-button btn-import-kmz" onclick="document.getElementById('kmzUpload').click()"><span class="button-icon">🗂️</span><span>Πολύγωνα KMZ</span></button>
+            <button class="control-button btn-import-shp" onclick="document.getElementById('shpUpload').click()"><span class="button-icon">🧩</span><span>Πολύγωνα SHP</span></button>
+            <button class="control-button btn-import-clear" onclick="clearImportedPolygons()" id="clearImportsBtn" disabled><span class="button-icon">✖️</span><span>Αφαίρεση πολυγώνων</span></button>
+            <input type="file" id="kmzUpload" accept=".kmz,application/vnd.google-earth.kmz,application/zip" hidden onchange="loadKmzPolygons(event)">
+            <input type="file" id="shpUpload" accept=".zip,.shp,.shx,.dbf,.prj,.cpg,application/zip" multiple hidden onchange="loadShapefilePolygons(event)">
         </div>
 
         <div class="control-section-title"><span>Εξαγωγή</span></div>
         <div class="control-row" aria-label="Λειτουργίες εξαγωγής">
-            <button class="control-button btn-dxf" onclick="exportDXF()">💾 <span>Εξαγωγή DXF</span></button>
-            <button class="control-button btn-kmz" onclick="exportKMZ()">🌍 <span>Εξαγωγή KMZ</span></button>
-            <button class="control-button btn-csv" onclick="exportCSV()">📊 <span>Εξαγωγή CSV</span></button>
+            <button class="control-button btn-dxf" onclick="exportDXF()"><span class="button-icon">💾</span><span>Εξαγωγή DXF</span></button>
+            <button class="control-button btn-kmz" onclick="exportKMZ()"><span class="button-icon">🌍</span><span>Εξαγωγή KMZ</span></button>
+            <button class="control-button btn-csv" onclick="exportCSV()"><span class="button-icon">📊</span><span>Εξαγωγή CSV</span></button>
         </div>
 
         <div class="clear-row" aria-label="Καθαρισμός">
-            <button class="control-button btn-clear" onclick="clearAll()">🗑️ <span>Καθαρισμός</span></button>
+            <button class="control-button btn-clear" onclick="clearAll()"><span class="button-icon">🗑️</span><span>Καθαρισμός</span></button>
         </div>
     </div>
 
@@ -418,7 +621,7 @@
             <span>⏹️ Διασπορά <span class="input-unit">(m)</span></span>
             <input type="number" id="spreadStopInput" value="1" min="0.2" max="10" step="0.1">
         </label>
-        <span id="areaDisplay" class="area-display">📐 Εμβαδό: 0,00 τ.μ.</span>
+        <span id="areaDisplay" class="area-display">📐 Εμβαδό: 0,00 τ.μ. &nbsp;|&nbsp; 📏 Περίμετρος: 0,00 m</span>
     </div>
 
     <div id="info">
@@ -434,7 +637,7 @@
     <div id="mapModal" class="map-modal" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle" onclick="handleMapModalBackdrop(event)">
         <div class="map-modal-panel">
             <div class="map-modal-header">
-                <div id="mapModalTitle" class="map-modal-title">🗺️ Επιλογή υποβάθρου</div>
+                <div id="mapModalTitle" class="map-modal-title">🗺️ Χάρτης και επίπεδα</div>
                 <button type="button" class="map-modal-close" onclick="closeMapMenu()" aria-label="Κλείσιμο">×</button>
             </div>
             <div class="map-option-list">
@@ -459,8 +662,39 @@
                     <span class="map-option-check"></span>
                 </button>
             </div>
+
+            <div class="layer-section">
+                <div class="layer-section-title">COPERNICUS</div>
+                <div class="layer-option-list">
+                    <label class="layer-option"><input type="checkbox" data-layer-key="landcover" onchange="toggleThematicLayer('landcover', this.checked)"><span class="layer-option-label">Κάλυψη γης<span class="layer-option-note">ESA WorldCover 2021, 10 m</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="vegetation" onchange="toggleThematicLayer('vegetation', this.checked)"><span class="layer-option-label">Βλάστηση<span class="layer-option-note">Sentinel‑2 FCOVER, τελευταία διαθέσιμη περίοδος</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="hydrology" onchange="toggleThematicLayer('hydrology', this.checked)"><span class="layer-option-label">Υδρολογικές μεταβλητές<span class="layer-option-note">Θολότητα επιφανειακών υδάτων Sentinel‑2</span></span><span class="layer-badge live">LIVE</span></label>
+                    <div class="layer-option"><input type="checkbox" onchange="openEgmsExplorer(this)"><span class="layer-option-label">Μετακινήσεις εδάφους<span class="layer-option-note">European Ground Motion Service (εξωτερικός επίσημος Explorer)</span></span><button type="button" class="external-layer-btn" onclick="event.preventDefault(); openEgmsExplorer()">Άνοιγμα ↗</button></div>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="mosaic" onchange="toggleThematicLayer('mosaic', this.checked)"><span class="layer-option-label">Δορυφορικά μωσαϊκά<span class="layer-option-note">Sentinel‑2 Cloudless 2024</span></span><span class="layer-badge live">LIVE</span></label>
+                </div>
+            </div>
+
+            <div class="layer-section">
+                <div class="layer-section-title">ΔΕΙΚΤΕΣ SENTINEL‑2</div>
+                <div class="layer-option-list">
+                    <label class="layer-option"><input type="checkbox" data-layer-key="ndvi" onchange="toggleThematicLayer('ndvi', this.checked)"><span class="layer-option-label">NDVI<span class="layer-option-note">Δείκτης βλάστησης Sentinel‑2</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="ndmi" onchange="toggleThematicLayer('ndmi', this.checked)"><span class="layer-option-label">NDMI<span class="layer-option-note">Υγρασία βλάστησης — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="ndwi" onchange="toggleThematicLayer('ndwi', this.checked)"><span class="layer-option-label">NDWI<span class="layer-option-note">Νερό — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="nbr" onchange="toggleThematicLayer('nbr', this.checked)"><span class="layer-option-label">NBR<span class="layer-option-note">Καμένες εκτάσεις — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="savi" onchange="toggleThematicLayer('savi', this.checked)"><span class="layer-option-label">SAVI<span class="layer-option-note">Αραιή βλάστηση — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="evi" onchange="toggleThematicLayer('evi', this.checked)"><span class="layer-option-label">EVI<span class="layer-option-note">Ενισχυμένος δείκτης — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
+                </div>
+                <div class="opacity-panel"><span>Διαφάνεια</span><input id="layerOpacity" type="range" min="10" max="100" value="70" step="5" oninput="setThematicOpacity(this.value)"><span id="layerOpacityValue">70%</span></div>
+                <div class="api-config">
+                    <label for="sentinelWmsUrl">Προαιρετικό Sentinel Hub WMS URL για NDMI, NDWI, NBR, SAVI και EVI</label>
+                    <div class="api-config-row"><input id="sentinelWmsUrl" type="url" placeholder="https://sh.dataspace.copernicus.eu/ogc/wms/INSTANCE_ID"><button type="button" class="api-save-btn" onclick="saveSentinelWmsUrl()">Αποθήκευση</button></div>
+                    <span class="layer-option-note">Η ρύθμιση αποθηκεύεται μόνο στη συσκευή. Το WMS instance πρέπει να έχει layers με ονόματα NDMI, NDWI, NBR, SAVI και EVI.</span>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div id="undoSnackbar"><span id="undoMessage">Το σημείο διαγράφηκε.</span><button type="button" onclick="undoDeletePoint()">↩ Επαναφορά</button></div>
 
     <script>
         "use strict";
@@ -473,6 +707,9 @@
         const STORAGE_KEY_ACCURACY = "gpsMaxAccuracy";
         const STORAGE_KEY_SPREAD = "gpsSpreadStop";
         const STORAGE_KEY_MAP = "gpsMapLayer";
+        const STORAGE_KEY_THEMATIC = "gpsThematicLayers";
+        const STORAGE_KEY_OPACITY = "gpsThematicOpacity";
+        const STORAGE_KEY_SENTINEL_WMS = "gpsSentinelWmsUrl";
         const AVERAGE_DURATION_MS = 10000;
         const MIN_AVERAGE_READINGS = 5;
 
@@ -498,6 +735,14 @@
         let currentMarker = null;
         let measurementLayer = null;
         let trigLayer = null;
+        let importedPolygonGroup = null;
+        let importedPolygonDatasets = [];
+        let importedDatasetCounter = 0;
+        let accuracyCircle = null;
+        let thematicLayers = {};
+        let activeThematicLayers = new Set();
+        let thematicOpacity = 0.70;
+        let sentinelWmsUrl = "";
         let currentPos = null;
         let polygonPoints = [];
         let githubTrigPoints = [];
@@ -511,6 +756,8 @@
         let avgReadings = [];
         let MAX_ACCURACY = 20;
         let SPREAD_STOP = 1.0;
+        let lastDeletedPoint = null;
+        let undoTimer = null;
 
         // ============================================================
         // 3. ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ
@@ -735,6 +982,20 @@
             return Math.abs(area) / 2;
         }
 
+        function calculatePerimeter(points) {
+            if (points.length < 3) return 0;
+            let perimeter = 0;
+            for (let i = 0; i < points.length; i++) {
+                const next = points[(i + 1) % points.length];
+                perimeter += Math.hypot(next.x - points[i].x, next.y - points[i].y);
+            }
+            return perimeter;
+        }
+
+        function segmentDistance(pointA, pointB) {
+            return Math.hypot(pointB.x - pointA.x, pointB.y - pointA.y);
+        }
+
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const toRad = degrees => degrees * Math.PI / 180;
@@ -773,8 +1034,18 @@
                 const spread = parseNumber(localStorage.getItem(STORAGE_KEY_SPREAD));
                 if (isFiniteNumber(spread)) SPREAD_STOP = spread;
 
+                const savedOpacity = parseNumber(localStorage.getItem(STORAGE_KEY_OPACITY));
+                if (isFiniteNumber(savedOpacity)) thematicOpacity = Math.min(1, Math.max(0.1, savedOpacity));
+
+                sentinelWmsUrl = localStorage.getItem(STORAGE_KEY_SENTINEL_WMS) || "";
+                const savedThematic = JSON.parse(localStorage.getItem(STORAGE_KEY_THEMATIC) || "[]");
+                if (Array.isArray(savedThematic)) activeThematicLayers = new Set(savedThematic);
+
                 document.getElementById("maxAccInput").value = MAX_ACCURACY;
                 document.getElementById("spreadStopInput").value = SPREAD_STOP;
+                document.getElementById("layerOpacity").value = Math.round(thematicOpacity * 100);
+                document.getElementById("layerOpacityValue").textContent = `${Math.round(thematicOpacity * 100)}%`;
+                document.getElementById("sentinelWmsUrl").value = sentinelWmsUrl;
             } catch (error) {
                 console.warn("Αδυναμία ανάγνωσης αποθηκευμένης κατάστασης:", error);
             }
@@ -785,6 +1056,9 @@
                 localStorage.setItem(STORAGE_KEY_POINTS, JSON.stringify(polygonPoints));
                 localStorage.setItem(STORAGE_KEY_ACCURACY, String(MAX_ACCURACY));
                 localStorage.setItem(STORAGE_KEY_SPREAD, String(SPREAD_STOP));
+                localStorage.setItem(STORAGE_KEY_OPACITY, String(thematicOpacity));
+                localStorage.setItem(STORAGE_KEY_THEMATIC, JSON.stringify([...activeThematicLayers]));
+                localStorage.setItem(STORAGE_KEY_SENTINEL_WMS, sentinelWmsUrl);
             } catch (error) {
                 console.warn("Αδυναμία αποθήκευσης:", error);
             }
@@ -833,9 +1107,12 @@
 
             measurementLayer = L.layerGroup().addTo(map);
             trigLayer = L.layerGroup().addTo(map);
-            updateMapButtonAndMenu();
+            importedPolygonGroup = L.featureGroup().addTo(map);
 
             loadState();
+            createThematicLayers();
+            restoreThematicLayers();
+            updateMapButtonAndMenu();
             updateDisplay();
             drawPolygon(false);
 
@@ -911,6 +1188,208 @@
             setStatus(`🗺️ Επιλέχθηκε: ${MAP_LAYER_NAMES[mapLayer]}`, "green");
         }
 
+        function recentTimeRange(days = 90) {
+            const end = new Date();
+            const start = new Date(end.getTime() - days * 86400000);
+            return `${start.toISOString().slice(0, 10)}/${end.toISOString().slice(0, 10)}`;
+        }
+
+        function createThematicLayers() {
+            const wmsUrl = "https://titiler.terrascope.be/wms";
+            const common = {
+                format: "image/png",
+                transparent: true,
+                version: "1.3.0",
+                opacity: thematicOpacity,
+                attribution: "Copernicus / Terrascope"
+            };
+            thematicLayers.landcover = L.tileLayer.wms(wmsUrl, {
+                ...common,
+                layers: "esa-worldcover-map-10m-2021-v2_map",
+                attribution: "ESA WorldCover 2021 / Terrascope"
+            });
+            thematicLayers.vegetation = L.tileLayer.wms(wmsUrl, {
+                ...common,
+                layers: "terrascope-s2-fcover-v2_fcover",
+                time: recentTimeRange(120),
+                attribution: "Sentinel-2 FCOVER / Terrascope"
+            });
+            thematicLayers.hydrology = L.tileLayer.wms(wmsUrl, {
+                ...common,
+                layers: "terrascope-s2-tur-v1_tur",
+                time: recentTimeRange(180),
+                attribution: "Sentinel-2 water turbidity / Terrascope"
+            });
+            thematicLayers.mosaic = L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg", {
+                opacity: thematicOpacity,
+                maxNativeZoom: 14,
+                maxZoom: 19,
+                attribution: "EOxCloudless © EOX — modified Copernicus Sentinel data 2024"
+            });
+            thematicLayers.ndvi = L.tileLayer.wms(wmsUrl, {
+                ...common,
+                layers: "terrascope-s2-ndvi-v2_ndvi",
+                time: recentTimeRange(120),
+                attribution: "Sentinel-2 NDVI / Terrascope"
+            });
+            rebuildCustomIndexLayers();
+
+            Object.entries(thematicLayers).forEach(([key, layer]) => {
+                if (layer && typeof layer.on === "function") {
+                    layer.on("tileerror", () => setStatus(`⚠️ Δεν φορτώθηκε προσωρινά το επίπεδο ${thematicLayerTitle(key)}`, "orange"));
+                }
+            });
+        }
+
+        function rebuildCustomIndexLayers() {
+            ["ndmi", "ndwi", "nbr", "savi", "evi"].forEach(key => {
+                const old = thematicLayers[key];
+                const wasActive = old && map && map.hasLayer(old);
+                if (wasActive) map.removeLayer(old);
+                thematicLayers[key] = sentinelWmsUrl ? L.tileLayer.wms(sentinelWmsUrl, {
+                    layers: key.toUpperCase(),
+                    format: "image/png",
+                    transparent: true,
+                    version: "1.3.0",
+                    opacity: thematicOpacity,
+                    attribution: "Copernicus Data Space / Sentinel Hub"
+                }) : null;
+                if (wasActive && thematicLayers[key]) thematicLayers[key].addTo(map);
+            });
+        }
+
+        function thematicLayerTitle(key) {
+            return ({
+                landcover: "Κάλυψη γης",
+                vegetation: "Βλάστηση",
+                hydrology: "Υδρολογικές μεταβλητές",
+                mosaic: "Δορυφορικό μωσαϊκό",
+                ndvi: "NDVI",
+                ndmi: "NDMI",
+                ndwi: "NDWI",
+                nbr: "NBR",
+                savi: "SAVI",
+                evi: "EVI"
+            })[key] || key;
+        }
+
+        function restoreThematicLayers() {
+            const valid = [];
+            activeThematicLayers.forEach(key => {
+                const layer = thematicLayers[key];
+                if (layer) {
+                    layer.setOpacity?.(thematicOpacity);
+                    layer.addTo(map);
+                    valid.push(key);
+                }
+            });
+            activeThematicLayers = new Set(valid);
+            syncThematicCheckboxes();
+            updateLegend();
+        }
+
+        function toggleThematicLayer(key, checked) {
+            let layer = thematicLayers[key];
+            if (checked && !layer && ["ndmi", "ndwi", "nbr", "savi", "evi"].includes(key)) {
+                const checkbox = document.querySelector(`input[data-layer-key="${key}"]`);
+                if (checkbox) checkbox.checked = false;
+                setStatus(`⚠️ Για το ${key.toUpperCase()} χρειάζεται Sentinel Hub WMS URL`, "orange");
+                document.getElementById("sentinelWmsUrl").focus();
+                return;
+            }
+            if (!layer) return;
+
+            if (checked) {
+                layer.setOpacity?.(thematicOpacity);
+                layer.addTo(map);
+                activeThematicLayers.add(key);
+                setStatus(`✅ Ενεργοποιήθηκε: ${thematicLayerTitle(key)}`, "green");
+            } else {
+                if (map.hasLayer(layer)) map.removeLayer(layer);
+                activeThematicLayers.delete(key);
+                setStatus(`ℹ️ Απενεργοποιήθηκε: ${thematicLayerTitle(key)}`, "white");
+            }
+            saveState();
+            updateLegend();
+        }
+
+        function syncThematicCheckboxes() {
+            document.querySelectorAll("input[data-layer-key]").forEach(input => {
+                input.checked = activeThematicLayers.has(input.dataset.layerKey);
+            });
+        }
+
+        function setThematicOpacity(value) {
+            thematicOpacity = Math.min(1, Math.max(0.1, Number(value) / 100));
+            document.getElementById("layerOpacityValue").textContent = `${Math.round(thematicOpacity * 100)}%`;
+            Object.values(thematicLayers).forEach(layer => layer?.setOpacity?.(thematicOpacity));
+            saveState();
+        }
+
+        function saveSentinelWmsUrl() {
+            const value = document.getElementById("sentinelWmsUrl").value.trim().replace(/\?+$/, "");
+            if (value && !/^https:\/\//i.test(value)) {
+                alert("Το Sentinel Hub WMS URL πρέπει να αρχίζει με https://");
+                return;
+            }
+            sentinelWmsUrl = value;
+            rebuildCustomIndexLayers();
+            saveState();
+            setStatus(value ? "✅ Αποθηκεύτηκε το Sentinel Hub WMS URL" : "ℹ️ Αφαιρέθηκε το Sentinel Hub WMS URL", value ? "green" : "white");
+        }
+
+        function openEgmsExplorer(checkbox = null) {
+            if (checkbox) checkbox.checked = false;
+            window.open("https://egms.land.copernicus.eu/", "_blank", "noopener,noreferrer");
+            setStatus("↗ Άνοιξε ο επίσημος EGMS Explorer για τις μετακινήσεις εδάφους", "white");
+        }
+
+        function updateLegend() {
+            const legend = document.getElementById("mapLegend");
+            if (!legend) return;
+            const keys = [...activeThematicLayers];
+            if (!keys.length) {
+                legend.classList.remove("visible");
+                legend.innerHTML = "";
+                return;
+            }
+
+            const blocks = [];
+            keys.forEach(key => {
+                if (key === "landcover") {
+                    blocks.push(`<div class="legend-header"><span>Κάλυψη γης — ESA WorldCover 2021</span><span>10 m</span></div><div class="legend-items">` +
+                        [["#006400","Δέντρα"],["#ffbb22","Θάμνοι"],["#ffff4c","Λιβάδια"],["#f096ff","Καλλιέργειες"],["#fa0000","Δομημένη γη"],["#b4b4b4","Γυμνό έδαφος"],["#0064c8","Νερό"],["#0096a0","Υγρότοποι"]].map(([c,n]) => `<span class="legend-item"><span class="legend-swatch" style="background:${c}"></span>${n}</span>`).join("") + `</div>`);
+                } else if (["vegetation", "ndvi", "ndmi", "savi", "evi"].includes(key)) {
+                    blocks.push(`<div class="legend-header"><span>${thematicLayerTitle(key)}</span><span>χαμηλή → υψηλή</span></div><div class="legend-items"><span class="legend-gradient" style="background:linear-gradient(90deg,#8b4513,#f4df4e,#2ca25f,#005a32)"></span></div>`);
+                } else if (["hydrology", "ndwi"].includes(key)) {
+                    blocks.push(`<div class="legend-header"><span>${thematicLayerTitle(key)}</span><span>χαμηλή → υψηλή</span></div><div class="legend-items"><span class="legend-gradient" style="background:linear-gradient(90deg,#fff7bc,#7fcdbb,#2c7fb8,#253494)"></span></div>`);
+                } else if (key === "nbr") {
+                    blocks.push(`<div class="legend-header"><span>NBR</span><span>καμένη → υγιής βλάστηση</span></div><div class="legend-items"><span class="legend-gradient" style="background:linear-gradient(90deg,#7f0000,#d7301f,#fdae6b,#ffffcc,#238b45)"></span></div>`);
+                } else if (key === "mosaic") {
+                    blocks.push(`<div class="legend-header"><span>Sentinel‑2 Cloudless 2024</span><span>φυσικά χρώματα</span></div>`);
+                }
+            });
+            legend.innerHTML = blocks.join('<div style="height:1px;background:#32476c;margin:8px 0"></div>') + `<div class="legend-note">Υπόμνημα ενεργών επιπέδων • Διαφάνεια ${Math.round(thematicOpacity * 100)}% • Τα δορυφορικά προϊόντα δεν αποτελούν τοπογραφική αποτύπωση.</div>`;
+            legend.classList.add("visible");
+        }
+
+        function updateAccuracyCircle(position) {
+            if (accuracyCircle) {
+                map.removeLayer(accuracyCircle);
+                accuracyCircle = null;
+            }
+            if (!position || !isFiniteNumber(position.acc) || position.acc <= 0) return;
+            accuracyCircle = L.circle([position.lat, position.lon], {
+                radius: position.acc,
+                color: "#00bcd4",
+                weight: 2,
+                fillColor: "#4dd0e1",
+                fillOpacity: 0.14,
+                interactive: false
+            }).addTo(map);
+            accuracyCircle.bindTooltip(`Κύκλος ακρίβειας ±${formatNumber(position.acc, 1)} m`, { className: "accuracy-circle-label" });
+        }
+
         function createEmojiMarker(lat, lon, emoji, className) {
             return L.marker([lat, lon], {
                 icon: L.divIcon({
@@ -960,6 +1439,7 @@
             };
 
             updateInfo(currentPos);
+            updateAccuracyCircle(currentPos);
             document.getElementById("addBtn").disabled = false;
 
             if (currentMarker) map.removeLayer(currentMarker);
@@ -1101,6 +1581,7 @@
             };
 
             updateInfo(currentPos);
+            updateAccuracyCircle(currentPos);
             document.getElementById("addBtn").disabled = false;
 
             if (currentMarker) map.removeLayer(currentMarker);
@@ -1148,14 +1629,21 @@
             measurementLayer.clearLayers();
 
             polygonPoints.forEach((point, index) => {
+                const label = point.code || `P${index + 1}`;
                 const circle = L.circleMarker([point.lat, point.lon], {
-                    radius: 5,
+                    radius: 6,
                     color: "#ffffff",
-                    weight: 1,
+                    weight: 2,
                     fillColor: "#e94560",
                     fillOpacity: 1
-                }).bindTooltip(`${point.code || `P${index + 1}`}<br>X=${formatNumber(point.x, 2)}<br>Y=${formatNumber(point.y, 2)}`);
+                }).bindPopup(`<b>${escapeHtml(label)}</b><br>X=${formatNumber(point.x, 2)}<br>Y=${formatNumber(point.y, 2)}<br><button class="popup-button" onclick="editPoint(${index})">✏️ Επεξεργασία κωδικού</button>`);
                 circle.addTo(measurementLayer);
+                circle.bindTooltip(escapeHtml(label), {
+                    permanent: true,
+                    direction: "top",
+                    offset: [0, -7],
+                    className: "point-label"
+                });
             });
 
             const latLngs = polygonPoints.map(p => [p.lat, p.lon]);
@@ -1171,14 +1659,34 @@
                 }).addTo(measurementLayer);
             }
 
+            const segmentCount = polygonPoints.length >= 3 ? polygonPoints.length : Math.max(0, polygonPoints.length - 1);
+            for (let i = 0; i < segmentCount; i++) {
+                const a = polygonPoints[i];
+                const b = polygonPoints[(i + 1) % polygonPoints.length];
+                const midpoint = [(a.lat + b.lat) / 2, (a.lon + b.lon) / 2];
+                const distance = segmentDistance(a, b);
+                L.marker(midpoint, {
+                    interactive: false,
+                    icon: L.divIcon({
+                        className: "",
+                        html: `<div class="side-length-label">${formatNumber(distance, 2)} m</div>`,
+                        iconSize: [82, 20],
+                        iconAnchor: [41, 10]
+                    })
+                }).addTo(measurementLayer);
+            }
+
             const area = calculateArea(polygonPoints);
+            const perimeter = calculatePerimeter(polygonPoints);
             const areaElement = document.getElementById("areaDisplay");
             if (polygonPoints.length >= 3) {
-                areaElement.textContent = `📐 Εμβαδό: ${formatNumber(area, 2)} τ.μ. (${formatNumber(area / 1000, 3)} στρ.)`;
-            } else if (polygonPoints.length > 0) {
-                areaElement.textContent = "📐 Εμβαδό: χρειάζονται ≥3 σημεία";
+                areaElement.innerHTML = `📐 Εμβαδό: ${formatNumber(area, 2)} τ.μ. (${formatNumber(area / 1000, 3)} στρ.) &nbsp;|&nbsp; 📏 Περίμετρος: ${formatNumber(perimeter, 2)} m`;
+            } else if (polygonPoints.length === 2) {
+                areaElement.innerHTML = `📐 Εμβαδό: χρειάζονται ≥3 σημεία &nbsp;|&nbsp; 📏 Μήκος γραμμής: ${formatNumber(segmentDistance(polygonPoints[0], polygonPoints[1]), 2)} m`;
+            } else if (polygonPoints.length === 1) {
+                areaElement.innerHTML = `📐 Εμβαδό: χρειάζονται ≥3 σημεία &nbsp;|&nbsp; 📏 Περίμετρος: χρειάζονται ≥3 σημεία`;
             } else {
-                areaElement.textContent = "📐 Εμβαδό: 0,00 τ.μ.";
+                areaElement.innerHTML = `📐 Εμβαδό: 0,00 τ.μ. &nbsp;|&nbsp; 📏 Περίμετρος: 0,00 m`;
             }
 
             if (panToLast && latLngs.length) map.panTo(latLngs[latLngs.length - 1]);
@@ -1221,17 +1729,35 @@
                 const satellites = isFiniteNumber(point.satellites) ? formatInteger(point.satellites) : "N/A";
                 const code = point.code ? ` (${escapeHtml(point.code)})` : "";
 
+                const next = polygonPoints.length >= 2 ? polygonPoints[(index + 1) % polygonPoints.length] : null;
+                const sideInfo = next && (polygonPoints.length >= 3 || index < polygonPoints.length - 1)
+                    ? ` | Πλευρά προς ${escapeHtml(next.code || `P${(index + 1) % polygonPoints.length + 1}`)}: ${formatNumber(segmentDistance(point, next), 2)}m`
+                    : "";
+
                 return `<div class="point-row">` +
                     `<span class="badge ${badgeClass}">${badgeLabel}</span>` +
                     `<div class="point-main">` +
                         `${point.isAverage ? "⭐ " : ""}#${index + 1} → X=${formatNumber(point.x, 2)}, Y=${formatNumber(point.y, 2)}${code}` +
-                        `<span class="point-detail">Υψ.${altitude} | ${accuracy} | 🛰️${satellites}</span>` +
+                        `<span class="point-detail">Υψ.${altitude} | ${accuracy} | 🛰️${satellites}${sideInfo}</span>` +
                     `</div>` +
-                    `<button type="button" class="delete-point-btn" onclick="deletePoint(${index})" ` +
-                        `title="Διαγραφή σημείου ${index + 1}" aria-label="Διαγραφή σημείου ${index + 1}">🗑️</button>` +
+                    `<button type="button" class="point-action-btn edit-point-btn" onclick="editPoint(${index})" title="Επεξεργασία σημείου ${index + 1}" aria-label="Επεξεργασία σημείου ${index + 1}">✏️</button>` +
+                    `<button type="button" class="point-action-btn delete-point-btn" onclick="deletePoint(${index})" title="Διαγραφή σημείου ${index + 1}" aria-label="Διαγραφή σημείου ${index + 1}">🗑️</button>` +
                 `</div>`;
             }).join("");
             list.scrollTop = list.scrollHeight;
+        }
+
+        function editPoint(index) {
+            if (!Number.isInteger(index) || index < 0 || index >= polygonPoints.length) return;
+            const point = polygonPoints[index];
+            const currentCode = point.code || `P${index + 1}`;
+            const nextCode = prompt("Νέος κωδικός σημείου:", currentCode);
+            if (nextCode === null) return;
+            point.code = nextCode.trim();
+            saveState();
+            updateDisplay();
+            drawPolygon(false);
+            setStatus(`✏️ Ενημερώθηκε το σημείο #${index + 1}`, "green");
         }
 
         function deletePoint(index) {
@@ -1241,11 +1767,37 @@
             const pointName = point.code ? `«${point.code}»` : `#${index + 1}`;
             if (!confirm(`Να διαγραφεί το σημείο ${pointName};`)) return;
 
+            lastDeletedPoint = { point: { ...point }, index };
             polygonPoints.splice(index, 1);
             saveState();
             updateDisplay();
             drawPolygon(false);
+            showUndoSnackbar(`Διαγράφηκε το σημείο ${pointName}.`);
             setStatus(`🗑️ Διαγράφηκε το σημείο ${pointName}`, "orange");
+        }
+
+        function showUndoSnackbar(message) {
+            const bar = document.getElementById("undoSnackbar");
+            document.getElementById("undoMessage").textContent = message;
+            bar.classList.add("show");
+            if (undoTimer) clearTimeout(undoTimer);
+            undoTimer = setTimeout(() => {
+                bar.classList.remove("show");
+                lastDeletedPoint = null;
+            }, 9000);
+        }
+
+        function undoDeletePoint() {
+            if (!lastDeletedPoint) return;
+            const index = Math.min(lastDeletedPoint.index, polygonPoints.length);
+            polygonPoints.splice(index, 0, lastDeletedPoint.point);
+            lastDeletedPoint = null;
+            if (undoTimer) clearTimeout(undoTimer);
+            document.getElementById("undoSnackbar").classList.remove("show");
+            saveState();
+            updateDisplay();
+            drawPolygon(false);
+            setStatus("↩️ Το σημείο επαναφέρθηκε", "green");
         }
 
         // ============================================================
@@ -1261,7 +1813,7 @@
             if (button.disabled) return;
 
             button.disabled = true;
-            button.textContent = "⏳ Φόρτωση...";
+            button.innerHTML = '<span class="button-icon">⏳</span><span>Φόρτωση...</span>';
             setStatus("⏳ Λήψη του points.csv από το GitHub...", "orange");
 
             try {
@@ -1296,7 +1848,7 @@
                     "\n\nΜπορείς να χρησιμοποιήσεις το κουμπί «Φόρτωση CSV»."
                 );
             } finally {
-                button.textContent = "📍 Τριγωνομετρικά";
+                button.innerHTML = '<span class="button-icon triangle-icon">△</span><span>Τριγωνομετρικά</span>';
                 button.disabled = false;
             }
         }
@@ -1313,7 +1865,7 @@
             const container = document.createElement("div");
             const title = document.createElement("div");
             title.className = "popup-title";
-            title.textContent = `📍 ${point.name || "Τριγωνομετρικό"}`;
+            title.textContent = `△ ${point.name || "Τριγωνομετρικό"}`;
             container.appendChild(title);
 
             const rows = [
@@ -1351,13 +1903,14 @@
 
             points.forEach(point => {
                 const isCustom = point.source === "custom";
-                const marker = L.circleMarker([point.lat, point.lon], {
-                    radius: isCustom ? 6 : 4,
-                    color: isCustom ? "#ffffff" : "#ffd54f",
-                    weight: isCustom ? 2 : 1,
-                    fillColor: isCustom ? "#00bcd4" : "#ff9800",
-                    fillOpacity: 0.9,
-                                    });
+                const marker = L.marker([point.lat, point.lon], {
+                    icon: L.divIcon({
+                        className: "",
+                        html: `<div style="font-size:${isCustom ? 23 : 19}px;color:${isCustom ? "#00e5ff" : "#ffb300"};font-weight:900;line-height:1;text-shadow:0 0 2px #000,0 0 2px #000">△</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                });
                 marker.bindPopup(createTrigPopup(point));
                 marker.trigPoint = point;
                 marker.addTo(trigLayer);
@@ -1427,6 +1980,7 @@
             };
 
             updateInfo(currentPos);
+            updateAccuracyCircle(null);
             document.getElementById("addBtn").disabled = false;
             document.getElementById("pointCodeInput").value = currentPos.code;
 
@@ -1492,8 +2046,347 @@
             reader.readAsText(file, "UTF-8");
         }
 
+
         // ============================================================
-        // 11. ΕΞΑΓΩΓΗ DXF
+        // 11. ΕΙΣΑΓΩΓΗ ΠΟΛΥΓΩΝΩΝ KMZ / SHAPEFILE
+        // ============================================================
+        const IMPORT_POLYGON_COLORS = [
+            "#ff7043", "#26a69a", "#7e57c2", "#42a5f5",
+            "#d4e157", "#ec407a", "#8d6e63", "#29b6f6"
+        ];
+
+        function getFileExtension(filename) {
+            const name = String(filename || "").toLowerCase();
+            const dot = name.lastIndexOf(".");
+            return dot === -1 ? "" : name.slice(dot + 1);
+        }
+
+        function baseFilename(filename) {
+            return String(filename || "Αρχείο").replace(/\.[^.]+$/, "");
+        }
+
+        function normalizeGeoJsonCollections(value, fallbackName = "Επίπεδο") {
+            const collections = [];
+            const visit = (item, layerName) => {
+                if (!item) return;
+                if (Array.isArray(item)) {
+                    item.forEach((entry, index) => visit(entry, `${layerName} ${index + 1}`));
+                    return;
+                }
+                if (item.type === "FeatureCollection") {
+                    collections.push({
+                        name: item.fileName || item.name || layerName,
+                        geojson: item
+                    });
+                    return;
+                }
+                if (item.type === "Feature") {
+                    collections.push({
+                        name: layerName,
+                        geojson: { type: "FeatureCollection", features: [item] }
+                    });
+                    return;
+                }
+                if (item.type && item.coordinates) {
+                    collections.push({
+                        name: layerName,
+                        geojson: {
+                            type: "FeatureCollection",
+                            features: [{ type: "Feature", properties: {}, geometry: item }]
+                        }
+                    });
+                }
+            };
+            visit(value, fallbackName);
+            return collections;
+        }
+
+        function extractPolygonFeatures(geojson, sourceName = "Αρχείο") {
+            const features = [];
+            let ignored = 0;
+
+            const addGeometry = (geometry, properties = {}, featureId = null) => {
+                if (!geometry) return;
+                if (geometry.type === "Polygon" || geometry.type === "MultiPolygon") {
+                    features.push({
+                        type: "Feature",
+                        id: featureId,
+                        properties: { ...properties, _source_file: sourceName },
+                        geometry
+                    });
+                    return;
+                }
+                if (geometry.type === "GeometryCollection" && Array.isArray(geometry.geometries)) {
+                    geometry.geometries.forEach(child => addGeometry(child, properties, featureId));
+                    return;
+                }
+                ignored++;
+            };
+
+            const inputFeatures = geojson && geojson.type === "FeatureCollection"
+                ? geojson.features || []
+                : geojson && geojson.type === "Feature"
+                    ? [geojson]
+                    : [];
+
+            inputFeatures.forEach(feature => {
+                addGeometry(feature.geometry, feature.properties || {}, feature.id ?? null);
+            });
+
+            return {
+                geojson: { type: "FeatureCollection", features },
+                ignored
+            };
+        }
+
+        function ringMetricsWgs84(ring) {
+            if (!Array.isArray(ring) || ring.length < 3) return { signedArea: 0, perimeter: 0 };
+            const points = ring.map(coord => {
+                if (!Array.isArray(coord) || coord.length < 2) throw new Error("Μη έγκυρη κορυφή πολυγώνου.");
+                return wgs84ToEGSA87(Number(coord[1]), Number(coord[0]));
+            });
+
+            let twiceArea = 0;
+            let perimeter = 0;
+            for (let i = 0; i < points.length; i++) {
+                const current = points[i];
+                const next = points[(i + 1) % points.length];
+                twiceArea += current.x * next.y - next.x * current.y;
+                perimeter += Math.hypot(next.x - current.x, next.y - current.y);
+            }
+            return { signedArea: twiceArea / 2, perimeter };
+        }
+
+        function polygonGeometryMetrics(geometry) {
+            if (!geometry) return { area: 0, perimeter: 0 };
+            const polygons = geometry.type === "Polygon"
+                ? [geometry.coordinates]
+                : geometry.type === "MultiPolygon"
+                    ? geometry.coordinates
+                    : [];
+
+            let area = 0;
+            let perimeter = 0;
+            polygons.forEach(polygon => {
+                if (!Array.isArray(polygon) || polygon.length === 0) return;
+                polygon.forEach((ring, ringIndex) => {
+                    const metrics = ringMetricsWgs84(ring);
+                    const ringArea = Math.abs(metrics.signedArea);
+                    area += ringIndex === 0 ? ringArea : -ringArea;
+                    perimeter += metrics.perimeter;
+                });
+            });
+            return { area: Math.max(0, area), perimeter };
+        }
+
+        function importedFeatureName(feature, fallback) {
+            const properties = feature && feature.properties ? feature.properties : {};
+            const preferredKeys = ["name", "Name", "NAME", "title", "Title", "id", "ID", "code", "CODE"];
+            for (const key of preferredKeys) {
+                if (properties[key] !== undefined && properties[key] !== null && String(properties[key]).trim()) {
+                    return String(properties[key]).trim();
+                }
+            }
+            return fallback;
+        }
+
+        function importedFeaturePopup(feature, datasetName, index) {
+            const title = importedFeatureName(feature, `Πολύγωνο ${index + 1}`);
+            let metrics = { area: 0, perimeter: 0 };
+            try {
+                metrics = polygonGeometryMetrics(feature.geometry);
+            } catch (error) {
+                console.warn("Δεν υπολογίστηκαν μετρικά εισαγόμενου πολυγώνου:", error);
+            }
+
+            const properties = Object.entries(feature.properties || {})
+                .filter(([key, value]) => key !== "_source_file" && value !== null && value !== undefined && String(value).trim() !== "")
+                .slice(0, 12);
+
+            const table = properties.length
+                ? `<table class="imported-popup-table">${properties.map(([key, value]) =>
+                    `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(String(value))}</td></tr>`
+                ).join("")}</table>`
+                : '<div style="margin-top:6px;color:#5c6877;">Δεν υπάρχουν περιγραφικές ιδιότητες.</div>';
+
+            return `
+                <div class="imported-popup-title">${escapeHtml(title)}</div>
+                <div><b>Αρχείο:</b> ${escapeHtml(datasetName)}</div>
+                <div><b>Γεωμετρία:</b> ${escapeHtml(feature.geometry?.type || "Polygon")}</div>
+                <div class="imported-popup-metrics">
+                    📐 Εμβαδό: ${formatNumber(metrics.area, 2)} τ.μ.<br>
+                    📏 Περίμετρος: ${formatNumber(metrics.perimeter, 2)} m
+                </div>
+                ${table}`;
+        }
+
+        function addImportedPolygonDataset(geojson, datasetName, sourceType) {
+            const extracted = extractPolygonFeatures(geojson, datasetName);
+            const polygonCount = extracted.geojson.features.length;
+            if (!polygonCount) {
+                return { added: 0, ignored: extracted.ignored };
+            }
+
+            const datasetId = ++importedDatasetCounter;
+            const color = IMPORT_POLYGON_COLORS[(datasetId - 1) % IMPORT_POLYGON_COLORS.length];
+            const layer = L.geoJSON(extracted.geojson, {
+                style: {
+                    color,
+                    weight: 3,
+                    opacity: 0.95,
+                    fillColor: color,
+                    fillOpacity: 0.20
+                },
+                onEachFeature: (feature, featureLayer) => {
+                    const featureIndex = extracted.geojson.features.indexOf(feature);
+                    featureLayer.bindPopup(importedFeaturePopup(feature, datasetName, featureIndex), { maxWidth: 390 });
+                    featureLayer.bindTooltip(importedFeatureName(feature, `Πολύγωνο ${featureIndex + 1}`), {
+                        sticky: true,
+                        direction: "top"
+                    });
+                }
+            });
+
+            layer.addTo(importedPolygonGroup);
+            if (typeof layer.bringToFront === "function") layer.bringToFront();
+            importedPolygonDatasets.push({ id: datasetId, name: datasetName, sourceType, layer, count: polygonCount });
+            document.getElementById("clearImportsBtn").disabled = false;
+
+            const bounds = layer.getBounds();
+            if (bounds.isValid()) map.fitBounds(bounds.pad(0.08), { maxZoom: 18 });
+            return { added: polygonCount, ignored: extracted.ignored };
+        }
+
+        async function loadKmzPolygons(event) {
+            const input = event.target;
+            const file = input.files && input.files[0];
+            input.value = "";
+            if (!file) return;
+
+            if (getFileExtension(file.name) !== "kmz") {
+                alert("Επίλεξε αρχείο KMZ.");
+                return;
+            }
+            if (typeof JSZip === "undefined" || typeof toGeoJSON === "undefined") {
+                setStatus("❌ Δεν φορτώθηκαν οι βιβλιοθήκες KMZ", "red");
+                alert("Δεν φορτώθηκαν οι βιβλιοθήκες ανάγνωσης KMZ. Έλεγξε τη σύνδεση στο Internet και ανανέωσε τη σελίδα.");
+                return;
+            }
+
+            setStatus(`⏳ Ανάγνωση KMZ: ${file.name}`, "orange");
+            try {
+                const zip = await JSZip.loadAsync(await file.arrayBuffer());
+                const kmlEntries = Object.values(zip.files).filter(entry =>
+                    !entry.dir && entry.name.toLowerCase().endsWith(".kml") && !entry.name.startsWith("__MACOSX/")
+                );
+                if (!kmlEntries.length) throw new Error("Το KMZ δεν περιέχει αρχείο KML.");
+
+                let added = 0;
+                let ignored = 0;
+                for (const entry of kmlEntries) {
+                    const xmlText = await entry.async("text");
+                    const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+                    if (xml.querySelector("parsererror")) throw new Error(`Μη έγκυρο KML μέσα στο ${entry.name}.`);
+                    const converted = toGeoJSON.kml(xml);
+                    const result = addImportedPolygonDataset(converted, `${file.name} — ${entry.name}`, "KMZ");
+                    added += result.added;
+                    ignored += result.ignored;
+                }
+
+                if (!added) throw new Error("Δεν βρέθηκαν Polygon ή MultiPolygon μέσα στο KMZ.");
+                setStatus(`✅ KMZ: εμφανίστηκαν ${added} πολύγωνα${ignored ? ` — αγνοήθηκαν ${ignored} μη πολυγωνικές οντότητες` : ""}`, "green");
+            } catch (error) {
+                console.error("Σφάλμα KMZ:", error);
+                setStatus(`❌ KMZ: ${error.message}`, "red");
+                alert(`Απέτυχε η εισαγωγή KMZ.\n\n${error.message}`);
+            }
+        }
+
+        async function buildShapefileZip(files) {
+            const zipFile = files.find(file => getFileExtension(file.name) === "zip");
+            if (zipFile && files.length === 1) {
+                const buffer = await zipFile.arrayBuffer();
+                const archive = await JSZip.loadAsync(buffer);
+                const extensions = new Set(
+                    Object.values(archive.files)
+                        .filter(entry => !entry.dir)
+                        .map(entry => getFileExtension(entry.name))
+                );
+                if (!extensions.has("shp") || !extensions.has("dbf")) {
+                    throw new Error("Το ZIP πρέπει να περιέχει τουλάχιστον αρχεία .shp και .dbf.");
+                }
+                return { buffer, hasPrj: extensions.has("prj"), hasShx: extensions.has("shx") };
+            }
+
+            const relevant = files.filter(file => ["shp", "shx", "dbf", "prj", "cpg"].includes(getFileExtension(file.name)));
+            const extensions = new Set(relevant.map(file => getFileExtension(file.name)));
+            if (!extensions.has("shp") || !extensions.has("dbf")) {
+                throw new Error("Επίλεξε μαζί τουλάχιστον τα αρχεία .shp και .dbf ή ένα έτοιμο ZIP Shapefile.");
+            }
+
+            const zip = new JSZip();
+            for (const file of relevant) zip.file(file.name, await file.arrayBuffer());
+            const buffer = await zip.generateAsync({ type: "arraybuffer", compression: "DEFLATE" });
+            return { buffer, hasPrj: extensions.has("prj"), hasShx: extensions.has("shx") };
+        }
+
+        async function loadShapefilePolygons(event) {
+            const input = event.target;
+            const files = Array.from(input.files || []);
+            input.value = "";
+            if (!files.length) return;
+
+            if (typeof shp !== "function" || typeof JSZip === "undefined") {
+                setStatus("❌ Δεν φορτώθηκε η βιβλιοθήκη Shapefile", "red");
+                alert("Δεν φορτώθηκε η βιβλιοθήκη ανάγνωσης Shapefile. Έλεγξε τη σύνδεση στο Internet και ανανέωσε τη σελίδα.");
+                return;
+            }
+
+            const displayName = files.length === 1 ? files[0].name : baseFilename(files[0].name);
+            setStatus(`⏳ Ανάγνωση Shapefile: ${displayName}`, "orange");
+
+            try {
+                const shapefilePackage = await buildShapefileZip(files);
+                const parsed = await shp(shapefilePackage.buffer);
+                const collections = normalizeGeoJsonCollections(parsed, baseFilename(displayName));
+                if (!collections.length) throw new Error("Το Shapefile δεν επέστρεψε αναγνώσιμα δεδομένα.");
+
+                let added = 0;
+                let ignored = 0;
+                for (const collection of collections) {
+                    const datasetName = collections.length > 1
+                        ? `${displayName} — ${collection.name}`
+                        : displayName;
+                    const result = addImportedPolygonDataset(collection.geojson, datasetName, "SHP");
+                    added += result.added;
+                    ignored += result.ignored;
+                }
+
+                if (!added) throw new Error("Δεν βρέθηκαν Polygon ή MultiPolygon στο Shapefile.");
+                const projectionNote = shapefilePackage.hasPrj ? "" : " — χωρίς .prj: έλεγξε τη σωστή θέση του επιπέδου";
+                const indexNote = shapefilePackage.hasShx ? "" : " — χωρίς .shx: πιθανόν πιο αργή ή αποτυχημένη ανάγνωση";
+                setStatus(`✅ SHP: εμφανίστηκαν ${added} πολύγωνα${ignored ? ` — αγνοήθηκαν ${ignored} μη πολυγωνικές οντότητες` : ""}${projectionNote}${indexNote}`, "green");
+            } catch (error) {
+                console.error("Σφάλμα Shapefile:", error);
+                setStatus(`❌ SHP: ${error.message}`, "red");
+                alert(
+                    `Απέτυχε η εισαγωγή Shapefile.\n\n${error.message}\n\n` +
+                    "Προτεινόμενη μορφή: ένα ZIP που περιέχει αρχεία με ίδιο όνομα και καταλήξεις .shp, .shx, .dbf και .prj."
+                );
+            }
+        }
+
+        function clearImportedPolygons(askConfirmation = true) {
+            if (!importedPolygonDatasets.length) return;
+            if (askConfirmation && !confirm(`Να αφαιρεθούν τα ${importedPolygonDatasets.length} εισαγόμενα επίπεδα πολυγώνων;`)) return;
+            if (importedPolygonGroup) importedPolygonGroup.clearLayers();
+            importedPolygonDatasets = [];
+            document.getElementById("clearImportsBtn").disabled = true;
+            setStatus("🗑️ Αφαιρέθηκαν τα εισαγόμενα πολύγωνα", "orange");
+        }
+
+        // ============================================================
+        // 12. ΕΞΑΓΩΓΗ DXF
         // ============================================================
         function exportDXF() {
             if (polygonPoints.length === 0) {
@@ -1542,7 +2435,7 @@
         }
 
         // ============================================================
-        // 12. ΕΞΑΓΩΓΗ KMZ
+        // 13. ΕΞΑΓΩΓΗ KMZ
         // ============================================================
         async function exportKMZ() {
             if (polygonPoints.length < 3) {
@@ -1599,7 +2492,7 @@
         }
 
         // ============================================================
-        // 13. ΕΞΑΓΩΓΗ CSV
+        // 14. ΕΞΑΓΩΓΗ CSV
         // ============================================================
         function exportCSV() {
             if (polygonPoints.length === 0) {
@@ -1631,7 +2524,9 @@
             if (polygonPoints.length >= 3) {
                 const area = calculateArea(polygonPoints);
                 rows.push([]);
+                const perimeter = calculatePerimeter(polygonPoints);
                 rows.push(["Εμβαδό", area.toFixed(2), "τ.μ.", (area / 1000).toFixed(3), "στρέμματα"]);
+                rows.push(["Περίμετρος", perimeter.toFixed(2), "m"]);
             }
 
             const csv = "\uFEFF" + rows.map(row => row.map(value => csvEscape(value)).join(",")).join("\r\n");
@@ -1654,11 +2549,11 @@
         }
 
         // ============================================================
-        // 14. ΚΑΘΑΡΙΣΜΟΣ
+        // 15. ΚΑΘΑΡΙΣΜΟΣ
         // ============================================================
         function clearAll() {
-            const hasData = polygonPoints.length || allTrigPoints.length || currentPos;
-            if (hasData && !confirm("Να διαγραφούν οι μετρήσεις και τα φορτωμένα σημεία αναφοράς;")) return;
+            const hasData = polygonPoints.length || allTrigPoints.length || importedPolygonDatasets.length || currentPos;
+            if (hasData && !confirm("Να διαγραφούν οι μετρήσεις, τα σημεία αναφοράς και τα εισαγόμενα πολύγωνα;")) return;
 
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
             if (averageTimer !== null) clearTimeout(averageTimer);
@@ -1680,8 +2575,13 @@
 
             measurementLayer.clearLayers();
             trigLayer.clearLayers();
+            if (importedPolygonGroup) importedPolygonGroup.clearLayers();
+            importedPolygonDatasets = [];
+            document.getElementById("clearImportsBtn").disabled = true;
             if (currentMarker) map.removeLayer(currentMarker);
+            if (accuracyCircle) map.removeLayer(accuracyCircle);
             currentMarker = null;
+            accuracyCircle = null;
 
             document.getElementById("currentPos").textContent = "Αναμονή GPS...";
             document.getElementById("pointCount").textContent = "0";
@@ -1689,11 +2589,11 @@
             document.getElementById("addBtn").disabled = true;
             document.getElementById("extraInfo").textContent = "";
             document.getElementById("satCount").textContent = "-";
-            document.getElementById("areaDisplay").textContent = "📐 Εμβαδό: 0,00 τ.μ.";
+            document.getElementById("areaDisplay").innerHTML = "📐 Εμβαδό: 0,00 τ.μ. &nbsp;|&nbsp; 📏 Περίμετρος: 0,00 m";
             document.getElementById("pointCodeInput").value = "";
             document.getElementById("avgBtn").disabled = false;
             document.getElementById("progress-bar").style.display = "none";
-            document.getElementById("refBtn").textContent = "📍 Τριγωνομετρικά";
+            document.getElementById("refBtn").innerHTML = '<span class="button-icon triangle-icon">△</span><span>Τριγωνομετρικά</span>';
             document.getElementById("refBtn").disabled = false;
             setStatus("🟢 Έτοιμο", "white");
         }
@@ -1702,3 +2602,4 @@
     </script>
 </body>
 </html>
+
