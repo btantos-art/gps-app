@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -173,7 +174,6 @@
             loadState();
             if (polygonPoints.length > 0) drawPolygon();
 
-            // Όταν αλλάζει το zoom ή μετακινείται ο χάρτης, ανανεώνουμε τα σημεία
             map.on('moveend zoomend', function() {
                 if (isTrigLoaded && allTrigPoints.length > 0) {
                     updateVisibleTrigPoints();
@@ -227,14 +227,13 @@
             map.setView([lat, lon], 15);
             setStatus('✅ Θέση λήφθηκε', 'green');
 
-            // Εμφάνιση κοντινών τριγωνομετρικών (αν έχουν φορτωθεί)
             if (isTrigLoaded) {
                 showNearbyTrigPoints(lat, lon);
             }
         }
 
         // ============================================================
-        // 6. ΜΕΣΟΣ ΟΡΟΣ
+        // 6. ΜΕΣΟΣ ΟΡΟΣ (πανομοιότυπος με πριν)
         // ============================================================
         function startAverage() {
             if (isAveraging) return;
@@ -450,7 +449,7 @@
         // 10. ΦΟΡΤΩΣΗ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ ΑΠΟ GITHUB
         // ============================================================
         // ⚠️ ΑΛΛΑΞΕ ΤΟ URL ΜΕ ΤΟ ΔΙΚΟ ΣΟΥ!
-        const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/ΟΝΟΜΑ_ΧΡΗΣΤΗ/ΟΝΟΜΑ_REPOSITORY/main/points.csv';
+        const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/btantos-art/GreekGridGPS/main/points.csv';
 
         async function loadTrigPointsFromGitHub() {
             const btn = document.getElementById('refBtn');
@@ -460,8 +459,30 @@
             setStatus('⏳ Φόρτωση τριγωνομετρικών σημείων από GitHub...', 'orange');
 
             try {
+                // Δοκιμή φόρτωσης από το URL
                 const response = await fetch(GITHUB_CSV_URL);
-                if (!response.ok) throw new Error('Απέτυχε η λήψη του αρχείου από GitHub');
+                if (!response.ok) {
+                    // Αν αποτύχει, εμφάνιση αναλυτικού μηνύματος
+                    let errorMsg = `Απέτυχε η φόρτωση (HTTP ${response.status}).\n`;
+                    if (response.status === 404) {
+                        errorMsg += 'Το αρχείο points.csv δεν βρέθηκε στο repository σου.\n';
+                        errorMsg += 'Βεβαιώσου ότι:\n';
+                        errorMsg += '1. Το αρχείο υπάρχει και το όνομά του είναι points.csv\n';
+                        errorMsg += '2. Το ανέβασες στον σωστό φάκελο\n';
+                        errorMsg += '3. Το repository είναι δημόσιο (Public)';
+                    } else if (response.status === 403) {
+                        errorMsg += 'Το repository είναι πιθανώς ιδιωτικό (Private).\n';
+                        errorMsg += 'Άλλαξε το σε Public ή φόρτωσε το CSV τοπικά.';
+                    } else {
+                        errorMsg += `Άγνωστο σφάλμα. Δοκίμασε να φορτώσεις το CSV τοπικά.`;
+                    }
+                    alert(errorMsg);
+                    setStatus('❌ '+errorMsg, 'red');
+                    btn.textContent = '📍 Τριγωνομετρικά';
+                    btn.disabled = false;
+                    return;
+                }
+
                 const csvText = await response.text();
 
                 // Μετατροπή CSV σε array
@@ -508,7 +529,6 @@
                 isTrigLoaded = true;
                 setStatus(`✅ Φορτώθηκαν ${allTrigPoints.length} τριγωνομετρικά σημεία`, 'green');
 
-                // Εμφάνιση αρχικών σημείων στο τρέχον zoom
                 updateVisibleTrigPoints();
 
                 btn.textContent = '📍 Τριγωνομετρικά';
@@ -517,7 +537,7 @@
             } catch (error) {
                 console.error(error);
                 setStatus('❌ Σφάλμα φόρτωσης τριγωνομετρικών', 'red');
-                alert('Απέτυχε η φόρτωση. Βεβαιώσου ότι:\n1. Το αρχείο points.csv υπάρχει στο GitHub σου.\n2. Η διεύθυνση GITHUB_CSV_URL είναι σωστή.\n3. Το repository είναι δημόσιο.');
+                alert('Απέτυχε η φόρτωση. Δοκίμασε να φορτώσεις το CSV τοπικά με το κουμπί "📤 Φόρτωση CSV".');
                 btn.textContent = '📍 Τριγωνομετρικά';
                 btn.disabled = false;
             }
@@ -529,21 +549,18 @@
         function updateVisibleTrigPoints() {
             if (!isTrigLoaded || allTrigPoints.length === 0) return;
 
-            // Αφαίρεση παλαιών markers
             trigMarkers.forEach(m => map.removeLayer(m));
             trigMarkers = [];
 
             const bounds = map.getBounds();
             const zoom = map.getZoom();
 
-            // Πυκνότητα σημείων ανάλογα με το zoom
             let maxPoints = 500;
             if (zoom < 8) maxPoints = 100;
             else if (zoom < 10) maxPoints = 300;
             else if (zoom < 12) maxPoints = 800;
             else maxPoints = 2000;
 
-            // Φιλτράρισμα σημείων εντός ορατής περιοχής
             let visible = [];
             allTrigPoints.forEach(p => {
                 if (bounds.contains([p.lat, p.lon])) {
@@ -551,14 +568,12 @@
                 }
             });
 
-            // Αν έχουμε πολλά, κρατάμε τα πιο αντιπροσωπευτικά (απλή δειγματοληψία)
             let toShow = visible;
             if (visible.length > maxPoints) {
                 const step = Math.ceil(visible.length / maxPoints);
                 toShow = visible.filter((_, i) => i % step === 0);
             }
 
-            // Δημιουργία markers
             toShow.forEach(p => {
                 const eg = { x: p.x, y: p.y };
                 const popupContent = `
@@ -591,7 +606,7 @@
         }
 
         // ============================================================
-        // 12. ΕΜΦΑΝΙΣΗ ΚΟΝΤΙΝΩΝ (με απόσταση)
+        // 12. ΕΜΦΑΝΙΣΗ ΚΟΝΤΙΝΩΝ
         // ============================================================
         function showNearbyTrigPoints(lat, lon, radiusKm = 5) {
             if (!isTrigLoaded || allTrigPoints.length === 0) {
@@ -686,8 +701,22 @@
 
                     if (newPoints.length === 0) { alert('Δεν βρέθηκαν έγκυρα σημεία στο CSV'); return; }
 
+                    // Προσθήκη custom σημείων στον allTrigPoints
                     customRefPoints = newPoints;
                     customRefPoints.forEach(p => {
+                        // Δημιουργία μόνιμου σημείου
+                        const eg = wgs84ToEGSA87(p.lat, p.lon);
+                        allTrigPoints.push({
+                            lat: p.lat,
+                            lon: p.lon,
+                            name: p.name || 'Custom',
+                            gysId: 'Custom',
+                            elev: p.elev || null,
+                            order: 'Custom',
+                            x: eg.x,
+                            y: eg.y
+                        });
+                        // Εμφάνιση στον χάρτη
                         const popupContent = `
                             <b>📍 ${p.name || 'Custom'}</b><br>
                             <b>Υψόμετρο:</b> ${p.elev || 'N/A'} m<br>
@@ -714,7 +743,7 @@
         }
 
         // ============================================================
-        // 15. ΕΞΑΓΩΓΕΣ
+        // 15. ΕΞΑΓΩΓΕΣ (DXF, KMZ, CSV)
         // ============================================================
         function exportDXF() {
             if (polygonPoints.length === 0) { alert('Δεν υπάρχουν σημεία!'); return; }
@@ -866,4 +895,3 @@
     </script>
 </body>
 </html>
-
