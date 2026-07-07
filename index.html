@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#16213e">
-    <title>Greek Grid GPS Pro - Τοπογραφικό Εργαλείο</title>
+    <title>Greek Grid GPS Pro v6 - Τοπογραφικό Εργαλείο</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -653,7 +653,7 @@
                 </button>
                 <button type="button" class="map-option" data-map-key="sentinel" onclick="changeMapLayer('sentinel')">
                     <span class="map-option-icon">🌍</span>
-                    <span><span class="map-option-name">Sentinel‑2 Cloudless 2024</span><span class="map-option-note">Εναλλακτικό δορυφορικό μωσαϊκό Copernicus/EOX</span></span>
+                    <span><span class="map-option-name">Sentinel‑2 φυσικά χρώματα 2021</span><span class="map-option-note">Εναλλακτικό δορυφορικό μωσαϊκό Copernicus/EOX</span></span>
                     <span class="map-option-check"></span>
                 </button>
                 <button type="button" class="map-option" data-map-key="topo" onclick="changeMapLayer('topo')">
@@ -666,18 +666,18 @@
             <div class="layer-section">
                 <div class="layer-section-title">COPERNICUS</div>
                 <div class="layer-option-list">
-                    <label class="layer-option"><input type="checkbox" data-layer-key="landcover" onchange="toggleThematicLayer('landcover', this.checked)"><span class="layer-option-label">Κάλυψη γης<span class="layer-option-note">ESA WorldCover 2021, 10 m</span></span><span class="layer-badge live">LIVE</span></label>
-                    <label class="layer-option"><input type="checkbox" data-layer-key="vegetation" onchange="toggleThematicLayer('vegetation', this.checked)"><span class="layer-option-label">Βλάστηση<span class="layer-option-note">Sentinel‑2 FCOVER, τελευταία διαθέσιμη περίοδος</span></span><span class="layer-badge live">LIVE</span></label>
-                    <label class="layer-option"><input type="checkbox" data-layer-key="hydrology" onchange="toggleThematicLayer('hydrology', this.checked)"><span class="layer-option-label">Υδρολογικές μεταβλητές<span class="layer-option-note">Θολότητα επιφανειακών υδάτων Sentinel‑2</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="landcover" onchange="toggleThematicLayer('landcover', this.checked)"><span class="layer-option-label">Κάλυψη γης<span class="layer-option-note">ESA WorldCover 2021, 10 m</span></span><span class="layer-badge live">2021</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="vegetation" onchange="toggleThematicLayer('vegetation', this.checked)"><span class="layer-option-label">Βλάστηση<span class="layer-option-note">Sentinel‑2 ψευδοχρωματικό μωσαϊκό 2021 (βλάστηση)</span></span><span class="layer-badge live">2021</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="hydrology" onchange="toggleThematicLayer('hydrology', this.checked)"><span class="layer-option-label">Υδρολογικές μεταβλητές<span class="layer-option-note">Sentinel‑2 SWIR 2021 (υγρασία και νερό)</span></span><span class="layer-badge live">2021</span></label>
                     <div class="layer-option"><input type="checkbox" onchange="openEgmsExplorer(this)"><span class="layer-option-label">Μετακινήσεις εδάφους<span class="layer-option-note">European Ground Motion Service (εξωτερικός επίσημος Explorer)</span></span><button type="button" class="external-layer-btn" onclick="event.preventDefault(); openEgmsExplorer()">Άνοιγμα ↗</button></div>
-                    <label class="layer-option"><input type="checkbox" data-layer-key="mosaic" onchange="toggleThematicLayer('mosaic', this.checked)"><span class="layer-option-label">Δορυφορικά μωσαϊκά<span class="layer-option-note">Sentinel‑2 Cloudless 2024</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="mosaic" onchange="toggleThematicLayer('mosaic', this.checked)"><span class="layer-option-label">Δορυφορικά μωσαϊκά<span class="layer-option-note">Sentinel‑2 φυσικά χρώματα 2021</span></span><span class="layer-badge live">2021</span></label>
                 </div>
             </div>
 
             <div class="layer-section">
                 <div class="layer-section-title">ΔΕΙΚΤΕΣ SENTINEL‑2</div>
                 <div class="layer-option-list">
-                    <label class="layer-option"><input type="checkbox" data-layer-key="ndvi" onchange="toggleThematicLayer('ndvi', this.checked)"><span class="layer-option-label">NDVI<span class="layer-option-note">Δείκτης βλάστησης Sentinel‑2</span></span><span class="layer-badge live">LIVE</span></label>
+                    <label class="layer-option"><input type="checkbox" data-layer-key="ndvi" onchange="toggleThematicLayer('ndvi', this.checked)"><span class="layer-option-label">NDVI<span class="layer-option-note">Sentinel‑2 NDVI 2021, 10 m</span></span><span class="layer-badge live">LIVE</span></label>
                     <label class="layer-option"><input type="checkbox" data-layer-key="ndmi" onchange="toggleThematicLayer('ndmi', this.checked)"><span class="layer-option-label">NDMI<span class="layer-option-note">Υγρασία βλάστησης — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
                     <label class="layer-option"><input type="checkbox" data-layer-key="ndwi" onchange="toggleThematicLayer('ndwi', this.checked)"><span class="layer-option-label">NDWI<span class="layer-option-note">Νερό — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
                     <label class="layer-option"><input type="checkbox" data-layer-key="nbr" onchange="toggleThematicLayer('nbr', this.checked)"><span class="layer-option-label">NBR<span class="layer-option-note">Καμένες εκτάσεις — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
@@ -685,6 +685,7 @@
                     <label class="layer-option"><input type="checkbox" data-layer-key="evi" onchange="toggleThematicLayer('evi', this.checked)"><span class="layer-option-label">EVI<span class="layer-option-note">Ενισχυμένος δείκτης — απαιτεί Sentinel Hub WMS</span></span><span class="layer-badge api">API</span></label>
                 </div>
                 <div class="opacity-panel"><span>Διαφάνεια</span><input id="layerOpacity" type="range" min="10" max="100" value="70" step="5" oninput="setThematicOpacity(this.value)"><span id="layerOpacityValue">70%</span></div>
+                <div class="layer-option-note" style="margin:7px 2px 10px;color:#cfe8ff;line-height:1.35;">Τα επίπεδα με ένδειξη 2021 είναι σταθερά δημόσια προϊόντα Sentinel‑2/WorldCover και εμφανίζονται χωρίς λογαριασμό ή ημερομηνία.</div>
                 <div class="api-config">
                     <label for="sentinelWmsUrl">Προαιρετικό Sentinel Hub WMS URL για NDMI, NDWI, NBR, SAVI και EVI</label>
                     <div class="api-config-row"><input id="sentinelWmsUrl" type="url" placeholder="https://sh.dataspace.copernicus.eu/ogc/wms/INSTANCE_ID"><button type="button" class="api-save-btn" onclick="saveSentinelWmsUrl()">Αποθήκευση</button></div>
@@ -1105,6 +1106,10 @@
                 preferCanvas: true
             }).setView([38.5, 23.7], 7);
 
+            if (!map.getPane("thematicPane")) map.createPane("thematicPane");
+            map.getPane("thematicPane").style.zIndex = "350";
+            map.getPane("thematicPane").style.pointerEvents = "none";
+
             measurementLayer = L.layerGroup().addTo(map);
             trigLayer = L.layerGroup().addTo(map);
             importedPolygonGroup = L.featureGroup().addTo(map);
@@ -1188,56 +1193,91 @@
             setStatus(`🗺️ Επιλέχθηκε: ${MAP_LAYER_NAMES[mapLayer]}`, "green");
         }
 
-        function recentTimeRange(days = 90) {
-            const end = new Date();
-            const start = new Date(end.getTime() - days * 86400000);
-            return `${start.toISOString().slice(0, 10)}/${end.toISOString().slice(0, 10)}`;
+        const TERRASCOPE_WMS_URL = "https://titiler.terrascope.be/wms";
+
+        function createPublicTerrascopeLayer(layerName, attribution) {
+            return L.tileLayer.wms(TERRASCOPE_WMS_URL, {
+                layers: layerName,
+                styles: "",
+                format: "image/png",
+                transparent: true,
+                version: "1.1.1",
+                uppercase: true,
+                opacity: thematicOpacity,
+                pane: "thematicPane",
+                zIndex: 350,
+                maxZoom: 19,
+                attribution
+            });
+        }
+
+        function attachThematicLayerDiagnostics(key, layer) {
+            if (!layer || typeof layer.on !== "function") return;
+            let loadedTiles = 0;
+            let failedTiles = 0;
+
+            layer.on("loading", () => {
+                loadedTiles = 0;
+                failedTiles = 0;
+                if (activeThematicLayers.has(key)) {
+                    setStatus(`⏳ Φόρτωση επιπέδου: ${thematicLayerTitle(key)}...`, "orange");
+                }
+            });
+
+            layer.on("tileload", () => {
+                loadedTiles += 1;
+                if (loadedTiles === 1 && activeThematicLayers.has(key)) {
+                    setStatus(`✅ Εμφανίστηκε: ${thematicLayerTitle(key)}`, "green");
+                }
+            });
+
+            layer.on("tileerror", () => {
+                failedTiles += 1;
+                if (failedTiles === 1 && activeThematicLayers.has(key)) {
+                    setStatus(`⚠️ Πρόβλημα σύνδεσης με το επίπεδο ${thematicLayerTitle(key)}`, "orange");
+                }
+            });
+
+            layer.on("load", () => {
+                if (!activeThematicLayers.has(key)) return;
+                if (loadedTiles === 0) {
+                    setStatus(`⚠️ Το επίπεδο ${thematicLayerTitle(key)} δεν επέστρεψε ορατά δεδομένα στην περιοχή`, "orange");
+                }
+            });
         }
 
         function createThematicLayers() {
-            const wmsUrl = "https://titiler.terrascope.be/wms";
-            const common = {
-                format: "image/png",
-                transparent: true,
-                version: "1.3.0",
-                opacity: thematicOpacity,
-                attribution: "Copernicus / Terrascope"
-            };
-            thematicLayers.landcover = L.tileLayer.wms(wmsUrl, {
-                ...common,
-                layers: "esa-worldcover-map-10m-2021-v2_map",
-                attribution: "ESA WorldCover 2021 / Terrascope"
-            });
-            thematicLayers.vegetation = L.tileLayer.wms(wmsUrl, {
-                ...common,
-                layers: "terrascope-s2-fcover-v2_fcover",
-                time: recentTimeRange(120),
-                attribution: "Sentinel-2 FCOVER / Terrascope"
-            });
-            thematicLayers.hydrology = L.tileLayer.wms(wmsUrl, {
-                ...common,
-                layers: "terrascope-s2-tur-v1_tur",
-                time: recentTimeRange(180),
-                attribution: "Sentinel-2 water turbidity / Terrascope"
-            });
-            thematicLayers.mosaic = L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg", {
-                opacity: thematicOpacity,
-                maxNativeZoom: 14,
-                maxZoom: 19,
-                attribution: "EOxCloudless © EOX — modified Copernicus Sentinel data 2024"
-            });
-            thematicLayers.ndvi = L.tileLayer.wms(wmsUrl, {
-                ...common,
-                layers: "terrascope-s2-ndvi-v2_ndvi",
-                time: recentTimeRange(120),
-                attribution: "Sentinel-2 NDVI / Terrascope"
-            });
+            // Σταθερά δημόσια προϊόντα 2021. Δεν χρειάζονται λογαριασμό,
+            // API key ή επιλογή ημερομηνίας και είναι πιο αξιόπιστα σε web εφαρμογή.
+            thematicLayers.landcover = createPublicTerrascopeLayer(
+                "esa-worldcover-map-10m-2021-v2_map",
+                "ESA WorldCover 2021 / Terrascope"
+            );
+
+            thematicLayers.vegetation = createPublicTerrascopeLayer(
+                "esa-worldcover-s2rgbnir-10m-2021-v2_fcc",
+                "Sentinel-2 false colour 2021 / ESA WorldCover / Terrascope"
+            );
+
+            thematicLayers.hydrology = createPublicTerrascopeLayer(
+                "esa-worldcover-swir-10m-2021-v2_swir",
+                "Sentinel-2 SWIR 2021 / ESA WorldCover / Terrascope"
+            );
+
+            thematicLayers.mosaic = createPublicTerrascopeLayer(
+                "esa-worldcover-s2rgbnir-10m-2021-v2_tcc",
+                "Sentinel-2 true colour 2021 / ESA WorldCover / Terrascope"
+            );
+
+            thematicLayers.ndvi = createPublicTerrascopeLayer(
+                "esa-worldcover-ndvi-10m-2021-v2_ndvi",
+                "Sentinel-2 NDVI 2021 / ESA WorldCover / Terrascope"
+            );
+
             rebuildCustomIndexLayers();
 
             Object.entries(thematicLayers).forEach(([key, layer]) => {
-                if (layer && typeof layer.on === "function") {
-                    layer.on("tileerror", () => setStatus(`⚠️ Δεν φορτώθηκε προσωρινά το επίπεδο ${thematicLayerTitle(key)}`, "orange"));
-                }
+                attachThematicLayerDiagnostics(key, layer);
             });
         }
 
@@ -1250,8 +1290,11 @@
                     layers: key.toUpperCase(),
                     format: "image/png",
                     transparent: true,
-                    version: "1.3.0",
+                    version: "1.1.1",
+                    uppercase: true,
                     opacity: thematicOpacity,
+                    pane: "thematicPane",
+                    zIndex: 350,
                     attribution: "Copernicus Data Space / Sentinel Hub"
                 }) : null;
                 if (wasActive && thematicLayers[key]) thematicLayers[key].addTo(map);
@@ -1280,6 +1323,8 @@
                 if (layer) {
                     layer.setOpacity?.(thematicOpacity);
                     layer.addTo(map);
+                    layer.bringToFront?.();
+                    layer.redraw?.();
                     valid.push(key);
                 }
             });
@@ -1302,6 +1347,8 @@
             if (checked) {
                 layer.setOpacity?.(thematicOpacity);
                 layer.addTo(map);
+                layer.bringToFront?.();
+                layer.redraw?.();
                 activeThematicLayers.add(key);
                 setStatus(`✅ Ενεργοποιήθηκε: ${thematicLayerTitle(key)}`, "green");
             } else {
@@ -1366,7 +1413,7 @@
                 } else if (key === "nbr") {
                     blocks.push(`<div class="legend-header"><span>NBR</span><span>καμένη → υγιής βλάστηση</span></div><div class="legend-items"><span class="legend-gradient" style="background:linear-gradient(90deg,#7f0000,#d7301f,#fdae6b,#ffffcc,#238b45)"></span></div>`);
                 } else if (key === "mosaic") {
-                    blocks.push(`<div class="legend-header"><span>Sentinel‑2 Cloudless 2024</span><span>φυσικά χρώματα</span></div>`);
+                    blocks.push(`<div class="legend-header"><span>Sentinel‑2 φυσικά χρώματα 2021</span><span>φυσικά χρώματα</span></div>`);
                 }
             });
             legend.innerHTML = blocks.join('<div style="height:1px;background:#32476c;margin:8px 0"></div>') + `<div class="legend-note">Υπόμνημα ενεργών επιπέδων • Διαφάνεια ${Math.round(thematicOpacity * 100)}% • Τα δορυφορικά προϊόντα δεν αποτελούν τοπογραφική αποτύπωση.</div>`;
