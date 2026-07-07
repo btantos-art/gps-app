@@ -15,10 +15,58 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: "Segoe UI", Arial, sans-serif; background: #1a1a2e; color: white; }
         #map { height: 45vh; min-height: 260px; width: 100%; border-bottom: 3px solid #e94560; }
-        #controls { padding: 4px 6px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; background: #16213e; }
-        button { padding: 5px 8px; border: none; border-radius: 30px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; flex: 1 1 auto; min-width: 46px; }
-        button:active { transform: scale(0.96); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #controls {
+            padding: 10px 8px 12px;
+            background: #16213e;
+        }
+        .control-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            width: 100%;
+        }
+        .control-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            margin: 11px 0 8px;
+            color: #dce8ff;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .control-section-title::before,
+        .control-section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #52658f;
+        }
+        button {
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+            font-family: inherit;
+            font-weight: 800;
+        }
+        .control-button {
+            min-height: 50px;
+            padding: 9px 7px;
+            font-size: 13px;
+            line-height: 1.15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-align: center;
+            white-space: normal;
+        }
+        .control-button:active { transform: scale(0.97); }
+        .control-button:hover { filter: brightness(1.08); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
         .btn-gps { background: #4CAF50; color: white; }
         .btn-avg { background: #2196F3; color: white; }
         .btn-add { background: #e94560; color: white; }
@@ -38,8 +86,33 @@
         #settings label { display: flex; align-items: center; gap: 2px; }
         #settings input[type="number"] { width: 44px; padding: 2px; border-radius: 3px; border: 1px solid #334; background: #1a1a2e; color: white; font-size: 9px; text-align: center; }
         #settings input[type="text"] { width: 76px; padding: 2px; border-radius: 3px; border: 1px solid #334; background: #1a1a2e; color: white; font-size: 9px; }
-        #coords-list { padding: 3px 5px; max-height: 100px; overflow-y: auto; background: #16213e; margin: 0 5px 5px; border-radius: 4px; font-size: 9px; font-family: Consolas, monospace; }
-        #coords-list > div { padding: 3px 0; border-bottom: 1px solid #2a3a5e; display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+        #coords-list { padding: 4px 5px; max-height: 180px; overflow-y: auto; background: #16213e; margin: 0 5px 5px; border-radius: 6px; font-size: 10px; font-family: Consolas, monospace; }
+        .point-row {
+            padding: 6px 3px;
+            border-bottom: 1px solid #2a3a5e;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 6px;
+        }
+        .point-row:last-child { border-bottom: 0; }
+        .point-main { min-width: 0; line-height: 1.35; overflow-wrap: anywhere; }
+        .point-detail { display: block; color: #bbb; font-size: 9px; margin-top: 2px; }
+        .delete-point-btn {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            padding: 0;
+            border-radius: 10px;
+            background: #c62828;
+            color: white;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .delete-point-btn:hover { filter: brightness(1.15); }
+        .empty-points { padding: 8px; text-align: center; color: #aeb8cf; font-family: "Segoe UI", Arial, sans-serif; }
         .badge { display: inline-block; padding: 0 5px; border-radius: 20px; font-size: 8px; font-weight: 700; }
         .badge-green { background: #4CAF50; color: white; }
         .badge-orange { background: #ff9800; color: white; }
@@ -53,10 +126,16 @@
         .popup-button { width: 100%; margin-top: 7px; padding: 5px 9px; background: #00bcd4; color: white; border: 0; border-radius: 18px; font-weight: 700; cursor: pointer; }
         .current-emoji-marker, .reference-emoji-marker { background: transparent; border: 0; text-align: center; font-size: 23px; line-height: 27px; }
         @media (max-width: 600px) {
-            button { font-size: 8px; padding: 4px 5px; min-width: 38px; }
+            #controls { padding: 8px 6px 10px; }
+            .control-row { gap: 6px; }
+            .control-button { min-height: 54px; padding: 8px 5px; font-size: 12px; }
+            .control-section-title { margin: 10px 0 7px; font-size: 11px; }
             #info { font-size: 9px; }
             #settings { font-size: 8px; }
-            #map { height: 44vh; }
+            #map { height: 42vh; }
+        }
+        @media (max-width: 380px) {
+            .control-button { font-size: 11px; padding: 7px 3px; }
         }
     </style>
 </head>
@@ -64,17 +143,30 @@
     <div id="map"></div>
 
     <div id="controls">
-        <button class="btn-gps" onclick="getGPS()">📍 GPS</button>
-        <button class="btn-avg" onclick="startAverage()" id="avgBtn">📊 Μ.Ο.</button>
-        <button class="btn-add" onclick="addPoint()" id="addBtn" disabled>➕ Προσθ.</button>
-        <button class="btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn">📍 Τριγωνομετρικά</button>
-        <button class="btn-upload" onclick="document.getElementById('csvUpload').click()">📤 Φόρτωση CSV</button>
-        <input type="file" id="csvUpload" accept=".csv,text/csv" hidden onchange="loadCustomRefPoints(event)">
-        <button class="btn-dxf" onclick="exportDXF()">💾 DXF</button>
-        <button class="btn-kmz" onclick="exportKMZ()">🌍 KMZ</button>
-        <button class="btn-csv" onclick="exportCSV()">📊 CSV</button>
-        <button class="btn-map" onclick="toggleMap()" id="mapBtn">🛰️ Δορυφόρος</button>
-        <button class="btn-clear" onclick="clearAll()">🗑️ Καθαρισμός</button>
+        <div class="control-row" aria-label="Βασικές λειτουργίες">
+            <button class="control-button btn-gps" onclick="getGPS()">📍 <span>Θέση GPS</span></button>
+            <button class="control-button btn-avg" onclick="startAverage()" id="avgBtn">📊 <span>Μέσος όρος</span></button>
+            <button class="control-button btn-add" onclick="addPoint()" id="addBtn" disabled>➕ <span>Προσθήκη σημείου</span></button>
+        </div>
+
+        <div class="control-section-title"><span>Εισαγωγή</span></div>
+        <div class="control-row" aria-label="Λειτουργίες εισαγωγής">
+            <button class="control-button btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn">📍 <span>Τριγωνομετρικά</span></button>
+            <button class="control-button btn-upload" onclick="document.getElementById('csvUpload').click()">📤 <span>Φόρτωση CSV</span></button>
+            <button class="control-button btn-map" onclick="toggleMap()" id="mapBtn">🛰️ <span>Δορυφόρος</span></button>
+            <input type="file" id="csvUpload" accept=".csv,text/csv" hidden onchange="loadCustomRefPoints(event)">
+        </div>
+
+        <div class="control-section-title"><span>Εξαγωγή</span></div>
+        <div class="control-row" aria-label="Λειτουργίες εξαγωγής">
+            <button class="control-button btn-dxf" onclick="exportDXF()">💾 <span>Εξαγωγή DXF</span></button>
+            <button class="control-button btn-kmz" onclick="exportKMZ()">🌍 <span>Εξαγωγή KMZ</span></button>
+            <button class="control-button btn-csv" onclick="exportCSV()">📊 <span>Εξαγωγή CSV</span></button>
+        </div>
+
+        <div style="margin-top:8px;">
+            <button class="control-button btn-clear" onclick="clearAll()" style="width:100%;">🗑️ <span>Καθαρισμός όλων των σημείων</span></button>
+        </div>
     </div>
 
     <div id="status">🟢 Έτοιμο</div>
@@ -193,6 +285,15 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&apos;");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function normalizeHeader(value) {
@@ -773,6 +874,11 @@
             document.getElementById("pointCount").textContent = polygonPoints.length;
             const list = document.getElementById("coords-list");
 
+            if (polygonPoints.length === 0) {
+                list.innerHTML = '<div class="empty-points">Δεν έχουν προστεθεί σημεία.</div>';
+                return;
+            }
+
             list.innerHTML = polygonPoints.map((point, index) => {
                 let badgeClass = "badge-gray";
                 let badgeLabel = "⚪";
@@ -783,12 +889,33 @@
                 const altitude = isFiniteNumber(point.alt) ? `${formatNumber(point.alt, 1)}m` : "N/A";
                 const accuracy = isFiniteNumber(point.acc) ? `±${formatNumber(point.acc, 1)}m` : "N/A";
                 const satellites = isFiniteNumber(point.satellites) ? formatInteger(point.satellites) : "N/A";
-                const code = point.code ? ` (${point.code})` : "";
-                return `<div><span class="badge ${badgeClass}">${badgeLabel}</span>` +
-                    `${point.isAverage ? "⭐ " : ""}#${index + 1} → X=${formatNumber(point.x, 2)}, Y=${formatNumber(point.y, 2)}${code}` +
-                    `<span class="detail">Υψ.${altitude} | ${accuracy} | 🛰️${satellites}</span></div>`;
+                const code = point.code ? ` (${escapeHtml(point.code)})` : "";
+
+                return `<div class="point-row">` +
+                    `<span class="badge ${badgeClass}">${badgeLabel}</span>` +
+                    `<div class="point-main">` +
+                        `${point.isAverage ? "⭐ " : ""}#${index + 1} → X=${formatNumber(point.x, 2)}, Y=${formatNumber(point.y, 2)}${code}` +
+                        `<span class="point-detail">Υψ.${altitude} | ${accuracy} | 🛰️${satellites}</span>` +
+                    `</div>` +
+                    `<button type="button" class="delete-point-btn" onclick="deletePoint(${index})" ` +
+                        `title="Διαγραφή σημείου ${index + 1}" aria-label="Διαγραφή σημείου ${index + 1}">🗑️</button>` +
+                `</div>`;
             }).join("");
             list.scrollTop = list.scrollHeight;
+        }
+
+        function deletePoint(index) {
+            if (!Number.isInteger(index) || index < 0 || index >= polygonPoints.length) return;
+
+            const point = polygonPoints[index];
+            const pointName = point.code ? `«${point.code}»` : `#${index + 1}`;
+            if (!confirm(`Να διαγραφεί το σημείο ${pointName};`)) return;
+
+            polygonPoints.splice(index, 1);
+            saveState();
+            updateDisplay();
+            drawPolygon(false);
+            setStatus(`🗑️ Διαγράφηκε το σημείο ${pointName}`, "orange");
         }
 
         // ============================================================
