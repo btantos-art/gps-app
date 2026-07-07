@@ -3,143 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Greek Grid GPS - Πολύγωνα σε DXF</title>
+    <title>Greek Grid GPS - Πολύγωνα & KMZ</title>
     
-    <!-- Leaflet.js για τον χάρτη -->
+    <!-- Leaflet.js & JSZip -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; }
-        #map { height: 50vh; width: 100%; border-bottom: 3px solid #e94560; }
+        #map { height: 45vh; width: 100%; border-bottom: 3px solid #e94560; }
         #controls {
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
             background: #16213e;
         }
         button {
-            padding: 12px 24px;
+            padding: 10px 16px;
             border: none;
             border-radius: 30px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
             flex: 1 1 auto;
-            min-width: 140px;
+            min-width: 100px;
         }
         button:active { transform: scale(0.95); }
         .btn-gps { background: #4CAF50; color: white; }
-        .btn-poly { background: #e94560; color: white; }
+        .btn-add { background: #e94560; color: white; }
         .btn-dxf { background: #0f3460; color: white; }
+        .btn-kmz { background: #ff9800; color: white; }
         .btn-clear { background: #533483; color: white; }
         #info {
-            padding: 15px 20px;
+            padding: 12px 16px;
             background: #0f3460;
-            margin: 10px 20px;
-            border-radius: 15px;
-            font-size: 14px;
+            margin: 10px;
+            border-radius: 12px;
+            font-size: 13px;
             line-height: 1.6;
-            min-height: 80px;
+            min-height: 70px;
         }
         #info strong { color: #e94560; }
         #coords-list {
-            padding: 10px 20px;
-            max-height: 200px;
+            padding: 8px 12px;
+            max-height: 160px;
             overflow-y: auto;
             background: #16213e;
-            margin: 0 20px 20px;
-            border-radius: 10px;
-            font-size: 13px;
+            margin: 0 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
             font-family: monospace;
         }
-        #coords-list div { padding: 4px 0; border-bottom: 1px solid #2a3a5e; }
+        #coords-list div { padding: 3px 0; border-bottom: 1px solid #2a3a5e; }
         .badge {
             display: inline-block;
             background: #e94560;
-            padding: 2px 10px;
+            padding: 1px 10px;
             border-radius: 20px;
-            font-size: 12px;
-            margin-left: 10px;
+            font-size: 11px;
+            margin-left: 6px;
         }
+        .detail { color: #aaa; font-size: 11px; margin-left: 10px; }
         @media (max-width: 600px) {
-            button { font-size: 14px; padding: 10px 16px; min-width: 100px; }
+            button { font-size: 12px; padding: 8px 12px; min-width: 70px; }
             #info { font-size: 12px; padding: 10px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ΧΑΡΤΗΣ -->
     <div id="map"></div>
 
-    <!-- ΚΟΥΜΠΙΑ -->
     <div id="controls">
-        <button class="btn-gps" onclick="getGPS()">📍 Πάρε Θέση</button>
-        <button class="btn-poly" onclick="addPoint()" id="addBtn" disabled>➕ Προσθήκη στο Πολύγωνο</button>
-        <button class="btn-dxf" onclick="exportDXF()">💾 Κατέβασε DXF</button>
+        <button class="btn-gps" onclick="getGPS()">📍 GPS</button>
+        <button class="btn-add" onclick="addPoint()" id="addBtn" disabled>➕ Προσθήκη</button>
+        <button class="btn-dxf" onclick="exportDXF()">💾 DXF</button>
+        <button class="btn-kmz" onclick="exportKMZ()">🌍 KMZ</button>
         <button class="btn-clear" onclick="clearAll()">🗑️ Καθαρισμός</button>
     </div>
 
-    <!-- ΠΛΗΡΟΦΟΡΙΕΣ -->
     <div id="info">
-        <strong>📍 Τρέχουσα θέση (ΕΓΣΑ87):</strong> <span id="currentPos">Αναμονή για GPS...</span><br>
-        <strong>📐 Σημεία πολυγώνου:</strong> <span id="pointCount">0</span>
+        <strong>📍 Θέση (ΕΓΣΑ87):</strong> <span id="currentPos">Αναμονή GPS...</span><br>
+        <strong>📐 Σημεία:</strong> <span id="pointCount">0</span>
+        <span id="extraInfo" style="display:block;margin-top:4px;font-size:12px;color:#aaa;"></span>
     </div>
 
-    <!-- ΛΙΣΤΑ ΣΗΜΕΙΩΝ -->
     <div id="coords-list"></div>
 
     <script>
         // ============================================================
-        // 1. ΜΕΤΑΤΡΟΠΗ WGS84 -> ΕΓΣΑ87 (προσεγγιστικός τύπος)
+        // 1. ΜΕΤΑΤΡΟΠΗ WGS84 -> ΕΓΣΑ87
         // ============================================================
         function wgs84ToEGSA87(lat, lon) {
-            // Χρησιμοποιούμε τη μέθοδο των 7 παραμέτρων (Helmert)
-            // Για ακρίβεια ~1-2 μέτρα (αρκετή για τις περισσότερες χρήσεις)
-            const a = 6378137.0;        // Μεγάλος ημιάξονας WGS84
-            const f = 1 / 298.257223563; // Πλάτυνση WGS84
+            const a = 6378137.0;
+            const f = 1 / 298.257223563;
             const e2 = 2*f - f*f;
-            
-            // Μετατροπή σε ακτίνια
             const phi = lat * Math.PI / 180;
             const lambda = lon * Math.PI / 180;
-            
-            // Ακτίνα καμπυλότητας
             const N = a / Math.sqrt(1 - e2 * Math.sin(phi) * Math.sin(phi));
-            
-            // Συντεταγμένες σε μέτρα (Gauss-Krüger)
-            // Παράμετροι για την Ελλάδα (ζώνη 34)
-            const L0 = 24 * Math.PI / 180; // Κεντρικός μεσημβρινός
+            const L0 = 24 * Math.PI / 180;
             const dL = lambda - L0;
-            
             const X = N * Math.cos(phi) * dL;
             const Y = (N * (1 - e2) / (1 - e2 * Math.sin(phi)*Math.sin(phi))) * 
                       (Math.tan(phi) + (e2 * Math.cos(phi)*Math.cos(phi) * Math.tan(phi)*Math.tan(phi)*Math.tan(phi))/2);
-            
-            // Προσθήκη σταθερών μετατόπισης για ΕΓΣΑ87
-            const X_EGSA = X * 0.9996 + 500000; // Ψευδοανατολή
-            const Y_EGSA = Y * 0.9996;          // Ψευδοβόρεια
-            
-            return { x: Math.round(X_EGSA), y: Math.round(Y_EGSA) };
+            return { x: Math.round(X * 0.9996 + 500000), y: Math.round(Y * 0.9996) };
         }
 
         // ============================================================
-        // 2. ΚΑΤΑΣΤΑΣΗ ΕΦΑΡΜΟΓΗΣ
+        // 2. ΚΑΤΑΣΤΑΣΗ
         // ============================================================
-        let currentPos = null;        // { lat, lon, x, y }
-        let polygonPoints = [];       // [ {x, y, lat, lon}, ... ]
-        let map = null;
-        let marker = null;
-        let polyline = null;
-        let polygonLayer = null;
+        let currentPos = null;        // { lat, lon, x, y, alt, acc }
+        let polygonPoints = [];       // { x, y, lat, lon, alt, acc }
+        let map = null, marker = null, polyline = null, polygonLayer = null;
 
         // ============================================================
-        // 3. ΑΡΧΙΚΟΠΟΙΗΣΗ ΧΑΡΤΗ
+        // 3. ΧΑΡΤΗΣ
         // ============================================================
         function initMap() {
             map = L.map('map').setView([38.0, 23.7], 7);
@@ -149,136 +132,196 @@
         }
 
         // ============================================================
-        // 4. ΛΗΨΗ GPS
+        // 4. ΛΗΨΗ GPS (με Υψόμετρο & Ακρίβεια)
         // ============================================================
         function getGPS() {
             if (!navigator.geolocation) {
-                document.getElementById('currentPos').innerText = '❌ Το GPS δεν υποστηρίζεται';
+                document.getElementById('currentPos').innerText = '❌ GPS δεν υποστηρίζεται';
                 return;
             }
-
-            document.getElementById('currentPos').innerText = '⏳ Αναζήτηση σήματος GPS...';
+            document.getElementById('currentPos').innerText = '⏳ Αναζήτηση σήματος...';
 
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
+                    const alt = pos.coords.altitude;        // υψόμετρο (m)
+                    const acc = pos.coords.accuracy;        // ακρίβεια (m)
                     const eg = wgs84ToEGSA87(lat, lon);
 
-                    currentPos = { lat, lon, x: eg.x, y: eg.y };
+                    currentPos = { 
+                        lat, lon, 
+                        x: eg.x, y: eg.y,
+                        alt: alt !== null ? Math.round(alt * 10) / 10 : null,
+                        acc: acc !== null ? Math.round(acc * 10) / 10 : null
+                    };
 
                     // Ενημέρωση UI
+                    let altText = currentPos.alt !== null ? `${currentPos.alt} m` : 'N/A';
+                    let accText = currentPos.acc !== null ? `${currentPos.acc} m` : 'N/A';
                     document.getElementById('currentPos').innerHTML = 
-                        `X=${eg.x} m, Y=${eg.y} m &nbsp; <span style="font-size:12px;color:#aaa;">(${lat.toFixed(6)}, ${lon.toFixed(6)})</span>`;
+                        `X=${eg.x} m, Y=${eg.y} m &nbsp; <span style="font-size:11px;color:#aaa;">(${lat.toFixed(5)}, ${lon.toFixed(5)})</span>`;
+                    document.getElementById('extraInfo').innerHTML = 
+                        `📏 Υψόμετρο: ${altText} &nbsp;|&nbsp; 🎯 Ακρίβεια: ±${accText}`;
 
-                    // Ενεργοποίηση κουμπιού "Προσθήκη"
                     document.getElementById('addBtn').disabled = false;
 
-                    // Σημάδι στον χάρτη
+                    // Σημάδι χάρτη
                     if (marker) map.removeLayer(marker);
                     marker = L.marker([lat, lon]).addTo(map)
-                        .bindPopup(`📍 Θέση<br>ΕΓΣΑ87: X=${eg.x}, Y=${eg.y}`)
+                        .bindPopup(`📍 Θέση<br>ΕΓΣΑ87: X=${eg.x}, Y=${eg.y}<br>Υψόμετρο: ${altText}<br>Ακρίβεια: ±${accText}`)
                         .openPopup();
                     map.setView([lat, lon], 15);
                 },
                 (err) => {
-                    document.getElementById('currentPos').innerText = `❌ Σφάλμα GPS: ${err.message}`;
+                    document.getElementById('currentPos').innerText = `❌ Σφάλμα: ${err.message}`;
                 },
                 { enableHighAccuracy: true, timeout: 15000 }
             );
         }
 
         // ============================================================
-        // 5. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ ΣΤΟ ΠΟΛΥΓΩΝΟ
+        // 5. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
         // ============================================================
         function addPoint() {
             if (!currentPos) {
-                alert('Πάρε πρώτα θέση με το κουμπί "Πάρε Θέση"');
+                alert('Πάρε πρώτα GPS!');
                 return;
             }
-
             polygonPoints.push({ ...currentPos });
-            updatePolygonDisplay();
+            updateDisplay();
 
-            // Σχεδίαση στον χάρτη
+            // Σχεδίαση
+            const ll = polygonPoints.map(p => [p.lat, p.lon]);
             if (polyline) map.removeLayer(polyline);
             if (polygonLayer) map.removeLayer(polygonLayer);
 
-            const latlngs = polygonPoints.map(p => [p.lat, p.lon]);
-
-            if (latlngs.length === 1) {
-                // Μόνο σημείο
-                polygonLayer = L.marker(latlngs[0]).addTo(map);
+            if (ll.length === 1) {
+                polygonLayer = L.marker(ll[0]).addTo(map);
             } else {
-                // Γραμμή ή πολύγωνο
-                polyline = L.polyline(latlngs, { color: '#e94560', weight: 3 }).addTo(map);
-                if (latlngs.length >= 3) {
-                    polygonLayer = L.polygon(latlngs, { color: '#e94560', fillColor: '#e94560', fillOpacity: 0.2 }).addTo(map);
+                polyline = L.polyline(ll, { color: '#e94560', weight: 3 }).addTo(map);
+                if (ll.length >= 3) {
+                    polygonLayer = L.polygon(ll, { color: '#e94560', fillColor: '#e94560', fillOpacity: 0.2 }).addTo(map);
                 }
             }
-            
-            // Εστίαση στο τελευταίο σημείο
-            map.setView(latlngs[latlngs.length-1], 15);
+            map.setView(ll[ll.length-1], 15);
         }
 
         // ============================================================
         // 6. ΕΝΗΜΕΡΩΣΗ ΟΘΟΝΗΣ
         // ============================================================
-        function updatePolygonDisplay() {
+        function updateDisplay() {
             document.getElementById('pointCount').innerText = polygonPoints.length;
-
             const list = document.getElementById('coords-list');
-            list.innerHTML = polygonPoints.map((p, i) => 
-                `<div>#${i+1} → X=${p.x} m, Y=${p.y} m <span class="badge">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</span></div>`
-            ).join('');
+            list.innerHTML = polygonPoints.map((p, i) => {
+                let altTxt = p.alt !== null ? `${p.alt}m` : 'N/A';
+                let accTxt = p.acc !== null ? `±${p.acc}m` : 'N/A';
+                return `<div>#${i+1} → X=${p.x}m, Y=${p.y}m <span class="detail">Υψ.${altTxt} | ${accTxt}</span></div>`;
+            }).join('');
             list.scrollTop = list.scrollHeight;
         }
 
         // ============================================================
-        // 7. ΕΞΑΓΩΓΗ DXF
+        // 7. ΕΞΑΓΩΓΗ DXF (με Υψόμετρο ως Z)
         // ============================================================
         function exportDXF() {
             if (polygonPoints.length < 3) {
-                alert('⚠️ Χρειάζονται τουλάχιστον 3 σημεία για να φτιάξεις πολύγωνο!');
+                alert('⚠️ Χρειάζονται ≥3 σημεία για πολύγωνο!');
                 return;
             }
-
-            // Δημιουργία περιεχομένου DXF (απλό ASCII format)
-            let dxf = `0\nSECTION\n2\nENTITIES\n`;
-
-            // Προσθήκη πολυγώνου (LWPOLYLINE)
-            dxf += `0\nLWPOLYLINE\n8\n0\n90\n${polygonPoints.length}\n70\n1\n`; // 70=1 κλειστό
+            let dxf = `0\nSECTION\n2\nENTITIES\n0\nLWPOLYLINE\n8\n0\n90\n${polygonPoints.length}\n70\n1\n`;
             polygonPoints.forEach(p => {
-                dxf += `10\n${p.x}\n20\n${p.y}\n`;
+                const z = (p.alt !== null) ? p.alt : 0;
+                dxf += `10\n${p.x}\n20\n${p.y}\n38\n${z}\n`;
             });
-
             dxf += `0\nENDSEC\n0\nEOF\n`;
 
-            // Δημιουργία και λήψη αρχείου
             const blob = new Blob([dxf], { type: 'application/dxf' });
-            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = `polygon_${new Date().toISOString().slice(0,10)}.dxf`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            alert('✅ Το DXF κατέβηκε επιτυχώς!');
+            alert('✅ DXF κατέβηκε!');
         }
 
         // ============================================================
-        // 8. ΚΑΘΑΡΙΣΜΟΣ
+        // 8. ΕΞΑΓΩΓΗ KMZ (Google Earth)
+        // ============================================================
+        function exportKMZ() {
+            if (polygonPoints.length < 3) {
+                alert('⚠️ Χρειάζονται ≥3 σημεία για KMZ!');
+                return;
+            }
+
+            // --- Δημιουργία KML ---
+            let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Πολύγωνο GPS</name>
+    <description>Δημιουργήθηκε με Greek Grid GPS app</description>
+`;
+
+            // Προσθήκη σημείων (Placemarks)
+            polygonPoints.forEach((p, i) => {
+                const alt = (p.alt !== null) ? p.alt : 0;
+                kml += `
+    <Placemark>
+      <name>Σημείο ${i+1}</name>
+      <description>X=${p.x} Y=${p.y} | Υψόμετρο: ${alt}m</description>
+      <Point>
+        <coordinates>${p.lon},${p.lat},${alt}</coordinates>
+      </Point>
+    </Placemark>
+`;
+            });
+
+            // Προσθήκη πολυγώνου
+            const coords = polygonPoints.map(p => {
+                const alt = (p.alt !== null) ? p.alt : 0;
+                return `${p.lon},${p.lat},${alt}`;
+            }).join(' ');
+            kml += `
+    <Placemark>
+      <name>Πολύγωνο</name>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>${coords}</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+`;
+
+            kml += `  </Document>\n</kml>`;
+
+            // --- Δημιουργία KMZ (zip με το KML μέσα) ---
+            const zip = new JSZip();
+            zip.file("polygon.kml", kml);
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = `polygon_${new Date().toISOString().slice(0,10)}.kmz`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                alert('✅ KMZ κατέβηκε! Άνοιξε το με Google Earth.');
+            });
+        }
+
+        // ============================================================
+        // 9. ΚΑΘΑΡΙΣΜΟΣ
         // ============================================================
         function clearAll() {
             polygonPoints = [];
             currentPos = null;
-            document.getElementById('currentPos').innerText = 'Αναμονή για GPS...';
+            document.getElementById('currentPos').innerText = 'Αναμονή GPS...';
             document.getElementById('pointCount').innerText = '0';
             document.getElementById('coords-list').innerHTML = '';
             document.getElementById('addBtn').disabled = true;
-            
+            document.getElementById('extraInfo').innerHTML = '';
             if (marker) map.removeLayer(marker);
             if (polyline) map.removeLayer(polyline);
             if (polygonLayer) map.removeLayer(polygonLayer);
@@ -286,7 +329,7 @@
         }
 
         // ============================================================
-        // 9. ΕΚΚΙΝΗΣΗ
+        // 10. ΕΚΚΙΝΗΣΗ
         // ============================================================
         window.onload = initMap;
     </script>
