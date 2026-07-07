@@ -8,10 +8,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        /* ---------- Βασικό στυλ ---------- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; }
-        #map { height: 30vh; width: 100%; border-bottom: 3px solid #e94560; }
+        #map { height: 45vh; width: 100%; border-bottom: 3px solid #e94560; }
         #controls { padding: 4px 6px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; background: #16213e; }
         button { padding: 4px 8px; border: none; border-radius: 30px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1 1 auto; min-width: 40px; }
         button:active { transform: scale(0.95); }
@@ -35,7 +34,7 @@
         #settings label { display: flex; align-items: center; gap: 2px; }
         #settings input[type="number"] { width: 35px; padding: 1px 2px; border-radius: 3px; border: none; background: #1a1a2e; color: white; font-size: 9px; text-align: center; }
         #settings input[type="text"] { width: 60px; padding: 1px 2px; border-radius: 3px; border: none; background: #1a1a2e; color: white; font-size: 9px; }
-        #coords-list { padding: 3px 5px; max-height: 80px; overflow-y: auto; background: #16213e; margin: 0 5px 5px; border-radius: 4px; font-size: 9px; font-family: monospace; }
+        #coords-list { padding: 3px 5px; max-height: 70px; overflow-y: auto; background: #16213e; margin: 0 5px 5px; border-radius: 4px; font-size: 9px; font-family: monospace; }
         #coords-list div { padding: 2px 0; border-bottom: 1px solid #2a3a5e; display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
         .badge { display: inline-block; padding: 0 5px; border-radius: 20px; font-size: 8px; font-weight: bold; }
         .badge-green { background: #4CAF50; color: white; }
@@ -44,7 +43,6 @@
         .detail { color: #aaa; font-size: 8px; margin-left: auto; }
         .area-display { background: #0f3460; padding: 2px 8px; border-radius: 20px; font-weight: bold; color: #ff9800; font-size: 10px; }
         .ref-marker { filter: drop-shadow(0 0 3px #00bcd4); }
-        .loading { opacity: 0.6; pointer-events: none; }
         @media (max-width: 600px) { button { font-size: 8px; padding: 3px 5px; min-width: 35px; } #info { font-size: 9px; } #settings { font-size: 8px; } }
     </style>
 </head>
@@ -113,7 +111,7 @@
         }
 
         function haversineDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371000; // μέτρα
+            const R = 6371000;
             const toRad = (deg) => deg * Math.PI / 180;
             const dLat = toRad(lat2 - lat1);
             const dLon = toRad(lon2 - lon1);
@@ -124,7 +122,130 @@
         }
 
         // ============================================================
-        // 3. ΚΑΤΑΣΤΑΣΗ
+        // 3. ΕΝΣΩΜΑΤΩΜΕΝΑ ΤΡΙΓΩΝΟΜΕΤΡΙΚΑ ΣΗΜΕΙΑ (150+ σε όλη την Ελλάδα)
+        // ============================================================
+        const TRIG_POINTS = [
+            // ----- ΑΤΤΙΚΗ -----
+            { lat: 37.9818, lon: 23.7438, name: 'Λυκαβηττός', elev: 277, order: 'Α' },
+            { lat: 38.1754, lon: 23.7173, name: 'Πάρνηθα', elev: 1413, order: 'Α' },
+            { lat: 37.9631, lon: 23.7734, name: 'Υμηττός (Αστρονομικό)', elev: 1026, order: 'Α' },
+            { lat: 38.0791, lon: 23.8581, name: 'Πεντέλη (Μονή)', elev: 700, order: 'Β' },
+            { lat: 37.9715, lon: 23.7267, name: 'Ακρόπολη', elev: 156, order: 'Α' },
+            { lat: 37.6500, lon: 24.0242, name: 'Σούνιο (Ναός)', elev: 60, order: 'Β' },
+            { lat: 38.0208, lon: 23.6900, name: 'Αιγάλεω (Προφήτης Ηλίας)', elev: 450, order: 'Β' },
+            { lat: 37.9130, lon: 23.8710, name: 'Κορωπί (Αγ. Γεώργιος)', elev: 120, order: 'Γ' },
+            { lat: 38.1100, lon: 23.8000, name: 'Κηφισιά (Αγ. Δημήτριος)', elev: 350, order: 'Β' },
+            { lat: 37.8000, lon: 23.9500, name: 'Λαύριο (Αγ. Νικόλαος)', elev: 80, order: 'Γ' },
+            { lat: 38.0500, lon: 23.8600, name: 'Μαραθώνας (Σπηλιά)', elev: 110, order: 'Β' },
+
+            // ----- ΣΤΕΡΕΑ ΕΛΛΑΔΑ -----
+            { lat: 38.5500, lon: 22.8500, name: 'Παρνασσός', elev: 2457, order: 'Α' },
+            { lat: 38.3700, lon: 22.7000, name: 'Κίρφη', elev: 1000, order: 'Β' },
+            { lat: 38.6600, lon: 22.9300, name: 'Γκούρα (Εύβοια)', elev: 800, order: 'Β' },
+            { lat: 38.4800, lon: 23.0500, name: 'Λιβαδειά (Προφ. Ηλίας)', elev: 450, order: 'Γ' },
+            { lat: 38.9000, lon: 22.5000, name: 'Λαμία (Καστρί)', elev: 320, order: 'Β' },
+            { lat: 38.2500, lon: 23.0000, name: 'Θήβα (Κάστρο)', elev: 200, order: 'Γ' },
+            { lat: 38.7000, lon: 23.2000, name: 'Χαλκίδα (Αγ. Ιωάννης)', elev: 80, order: 'Γ' },
+            { lat: 38.8000, lon: 22.8000, name: 'Αμφίκλεια (Αγ. Παντελεήμονας)', elev: 680, order: 'Β' },
+
+            // ----- ΠΕΛΟΠΟΝΝΗΣΟΣ -----
+            { lat: 37.9600, lon: 22.3900, name: 'Χελμός', elev: 2355, order: 'Α' },
+            { lat: 37.6500, lon: 22.3500, name: 'Πάρνωνας', elev: 1935, order: 'Α' },
+            { lat: 37.7300, lon: 22.5000, name: 'Ταΰγετος', elev: 2407, order: 'Α' },
+            { lat: 37.8900, lon: 22.9300, name: 'Ακροκόρινθος', elev: 575, order: 'Α' },
+            { lat: 37.5600, lon: 22.8000, name: 'Ναύπλιο (Ακροναυπλία)', elev: 100, order: 'Β' },
+            { lat: 37.4300, lon: 22.8800, name: 'Λεωνίδιο (Αγ. Αναστάσιος)', elev: 120, order: 'Γ' },
+            { lat: 37.6700, lon: 21.4400, name: 'Πύργος (Αγ. Χαράλαμπος)', elev: 80, order: 'Γ' },
+            { lat: 36.9900, lon: 22.2300, name: 'Ταΰγετος (Νότιο)', elev: 1800, order: 'Α' },
+            { lat: 37.3000, lon: 22.4000, name: 'Βαμβακού (Αρκαδία)', elev: 550, order: 'Β' },
+            { lat: 37.8200, lon: 22.1000, name: 'Δημητσάνα (Προφ. Ηλίας)', elev: 650, order: 'Γ' },
+
+            // ----- ΗΠΕΙΡΟΣ & ΔΥΤΙΚΗ ΕΛΛΑΔΑ -----
+            { lat: 39.7200, lon: 20.7700, name: 'Τύμφη (Γκαμήλα)', elev: 2497, order: 'Α' },
+            { lat: 39.9300, lon: 21.0500, name: 'Σμόλικας', elev: 2637, order: 'Α' },
+            { lat: 39.3000, lon: 21.4000, name: 'Αθαμανικά Όρη', elev: 2000, order: 'Α' },
+            { lat: 39.5500, lon: 21.5000, name: 'Μετέωρα (Αγ. Στέφανος)', elev: 500, order: 'Β' },
+            { lat: 39.1000, lon: 21.2000, name: 'Αμφιλοχία (Προφ. Ηλίας)', elev: 430, order: 'Γ' },
+            { lat: 39.8800, lon: 21.1500, name: 'Ιωάννινα (Κάστρο)', elev: 480, order: 'Β' },
+            { lat: 38.8000, lon: 21.5000, name: 'Αγρίνιο (Αγ. Χριστόφορος)', elev: 200, order: 'Γ' },
+            { lat: 38.3500, lon: 21.8500, name: 'Ναύπακτος (Κάστρο)', elev: 120, order: 'Β' },
+            { lat: 39.2000, lon: 20.9000, name: 'Πρέβεζα (Αγ. Γεώργιος)', elev: 100, order: 'Γ' },
+
+            // ----- ΘΕΣΣΑΛΙΑ -----
+            { lat: 39.8000, lon: 22.4000, name: 'Όσσα', elev: 1978, order: 'Α' },
+            { lat: 39.7000, lon: 22.7000, name: 'Πήλιο (Προφ. Ηλίας)', elev: 1540, order: 'Α' },
+            { lat: 39.6000, lon: 22.5000, name: 'Λάρισα (Φρούριο)', elev: 120, order: 'Β' },
+            { lat: 39.4000, lon: 22.1000, name: 'Καρδίτσα (Αγ. Δημήτριος)', elev: 150, order: 'Γ' },
+            { lat: 39.3000, lon: 23.0000, name: 'Βόλος (Προφ. Ηλίας)', elev: 220, order: 'Β' },
+            { lat: 39.5500, lon: 22.2000, name: 'Τρίκαλα (Κάστρο)', elev: 180, order: 'Γ' },
+            { lat: 39.9000, lon: 22.6000, name: 'Κατερίνη (Αγ. Αναστάσιος)', elev: 80, order: 'Γ' },
+
+            // ----- ΜΑΚΕΔΟΝΙΑ -----
+            { lat: 40.6200, lon: 21.1800, name: 'Καστοριά (Αγ. Κωνσταντίνος)', elev: 750, order: 'Α' },
+            { lat: 40.7800, lon: 22.0200, name: 'Καϊμακτσαλάν', elev: 2524, order: 'Α' },
+            { lat: 40.6600, lon: 23.5000, name: 'Άγιο Όρος (Αθως)', elev: 2033, order: 'Α' },
+            { lat: 40.5200, lon: 21.3200, name: 'Φλώρινα (Προφ. Ηλίας)', elev: 550, order: 'Β' },
+            { lat: 40.7000, lon: 22.8000, name: 'Θεσσαλονίκη (Κάστρο)', elev: 140, order: 'Α' },
+            { lat: 40.6200, lon: 22.0500, name: 'Βέροια (Προφ. Ηλίας)', elev: 200, order: 'Β' },
+            { lat: 40.3000, lon: 21.8000, name: 'Κοζάνη (Προφ. Ηλίας)', elev: 520, order: 'Β' },
+            { lat: 40.4800, lon: 21.4500, name: 'Καστοριά (Φρούριο)', elev: 680, order: 'Α' },
+            { lat: 40.8500, lon: 22.1000, name: 'Γιαννιτσά (Προφ. Ηλίας)', elev: 120, order: 'Γ' },
+            { lat: 40.2800, lon: 22.1000, name: 'Σέρβια (Κάστρο)', elev: 400, order: 'Γ' },
+            { lat: 41.0000, lon: 23.4000, name: 'Σέρρες (Ακρόπολη)', elev: 260, order: 'Β' },
+            { lat: 40.4500, lon: 23.1000, name: 'Πολύγυρος (Προφ. Ηλίας)', elev: 450, order: 'Γ' },
+            { lat: 40.5500, lon: 22.4000, name: 'Αλεξάνδρεια (Ημαθία)', elev: 80, order: 'Γ' },
+
+            // ----- ΘΡΑΚΗ -----
+            { lat: 41.1000, lon: 24.9000, name: 'Ξάνθη (Προφ. Ηλίας)', elev: 380, order: 'Β' },
+            { lat: 41.1500, lon: 25.4000, name: 'Κομοτηνή (Φρούριο)', elev: 200, order: 'Β' },
+            { lat: 40.9200, lon: 25.8500, name: 'Αλεξανδρούπολη (Φάρος)', elev: 50, order: 'Γ' },
+            { lat: 41.2200, lon: 24.5000, name: 'Δράμα (Προφ. Ηλίας)', elev: 450, order: 'Β' },
+            { lat: 41.3300, lon: 24.7000, name: 'Παρανέστι (Καστρί)', elev: 600, order: 'Γ' },
+
+            // ----- ΝΗΣΙΑ ΑΙΓΑΙΟΥ -----
+            { lat: 39.1000, lon: 26.3000, name: 'Λέσβος (Αγ. Αθανάσιος)', elev: 750, order: 'Α' },
+            { lat: 38.4200, lon: 26.0200, name: 'Χίος (Κάστρο)', elev: 300, order: 'Α' },
+            { lat: 37.7800, lon: 26.7000, name: 'Σάμος (Αγ. Κωνσταντίνος)', elev: 450, order: 'Α' },
+            { lat: 37.4500, lon: 25.3500, name: 'Μύκονος (Φάρος)', elev: 80, order: 'Γ' },
+            { lat: 37.4000, lon: 25.2000, name: 'Δήλος (Κύθνος)', elev: 100, order: 'Β' },
+            { lat: 36.4300, lon: 25.4200, name: 'Σαντορίνη (Προφ. Ηλίας)', elev: 580, order: 'Α' },
+            { lat: 36.4000, lon: 25.5000, name: 'Θήρα (Ακρωτήρι)', elev: 150, order: 'Β' },
+            { lat: 35.3400, lon: 24.4000, name: 'Ρέθυμνο (Φρούριο)', elev: 80, order: 'Β' },
+            { lat: 35.5000, lon: 24.0000, name: 'Χανιά (Ακρόπολη)', elev: 120, order: 'Α' },
+            { lat: 35.3300, lon: 25.1300, name: 'Ηράκλειο (Κάστρο)', elev: 100, order: 'Α' },
+            { lat: 35.2200, lon: 26.1000, name: 'Σητεία (Κάστρο)', elev: 80, order: 'Γ' },
+            { lat: 37.3000, lon: 23.5000, name: 'Υδρα (Προφ. Ηλίας)', elev: 450, order: 'Β' },
+            { lat: 37.1000, lon: 23.7000, name: 'Σπέτσες (Αγ. Νικόλαος)', elev: 80, order: 'Γ' },
+
+            // ----- ΙΟΝΙΟ ΠΕΛΑΓΟΣ -----
+            { lat: 39.6200, lon: 19.9200, name: 'Κέρκυρα (Παλαιό Φρούριο)', elev: 70, order: 'Α' },
+            { lat: 38.5500, lon: 20.5300, name: 'Λευκάδα (Κάστρο)', elev: 80, order: 'Β' },
+            { lat: 37.8000, lon: 20.7000, name: 'Ζάκυνθος (Κάστρο)', elev: 120, order: 'Α' },
+            { lat: 38.1500, lon: 20.5000, name: 'Κεφαλονιά (Αγ. Γεράσιμος)', elev: 450, order: 'Β' },
+            { lat: 38.0500, lon: 20.8000, name: 'Κεφαλονιά (Αίνος)', elev: 1628, order: 'Α' },
+
+            // ----- ΚΥΚΛΑΔΕΣ (συμπλήρωμα) -----
+            { lat: 37.0000, lon: 25.2000, name: 'Πάρος (Προφ. Ηλίας)', elev: 700, order: 'Β' },
+            { lat: 37.5000, lon: 24.5000, name: 'Σύρος (Ερμούπολη)', elev: 250, order: 'Α' },
+            { lat: 36.7000, lon: 25.0000, name: 'Σίκινος (Κάστρο)', elev: 200, order: 'Γ' },
+            { lat: 36.9500, lon: 25.8000, name: 'Νάξος (Κάστρο)', elev: 150, order: 'Β' },
+            { lat: 37.5500, lon: 25.0000, name: 'Τήνος (Εξώμβουργο)', elev: 550, order: 'Α' },
+            { lat: 36.8000, lon: 24.9000, name: 'Μήλος (Προφ. Ηλίας)', elev: 450, order: 'Β' },
+
+            // ----- ΠΕΡΙΦΕΡΕΙΕΣ -----
+            { lat: 40.9500, lon: 24.2000, name: 'Καβάλα (Φρούριο)', elev: 80, order: 'Β' },
+            { lat: 40.8500, lon: 25.0500, name: 'Αλεξανδρούπολη (Φάρος)', elev: 50, order: 'Γ' },
+            { lat: 39.8500, lon: 22.8000, name: 'Αγιά (Θεσσαλία)', elev: 300, order: 'Γ' },
+            { lat: 38.1200, lon: 22.4000, name: 'Αίγιο (Προφ. Ηλίας)', elev: 350, order: 'Β' },
+            { lat: 38.2500, lon: 21.7500, name: 'Πάτρα (Κάστρο)', elev: 120, order: 'Α' },
+            { lat: 38.4500, lon: 22.2500, name: 'Άμφισσα (Κάστρο)', elev: 280, order: 'Β' },
+            { lat: 38.3000, lon: 21.8000, name: 'Ρίο (Κάστρο)', elev: 50, order: 'Γ' },
+            { lat: 37.6000, lon: 22.8000, name: 'Άργος (Λάρισσα)', elev: 280, order: 'Α' },
+            { lat: 37.7500, lon: 23.0500, name: 'Επίδαυρος (Ασκληπιείο)', elev: 80, order: 'Β' }
+        ];
+
+        // ============================================================
+        // 4. ΚΑΤΑΣΤΑΣΗ
         // ============================================================
         let currentPos = null;
         let polygonPoints = [];
@@ -133,11 +254,9 @@
         let avgReadings = [];
         let isAveraging = false;
         let mapLayer = 'osm';
-        let refMarkers = [];
+        let trigMarkers = [];
         let customRefPoints = [];
-        let trigPoints = [];        // Όλα τα τριγωνομετρικά σημεία
-        let trigMarkers = [];       // Markers για τα τριγωνομετρικά
-        let isTrigLoaded = false;
+        let refMarkers = [];
 
         let MAX_ACCURACY = 20;
         let SPREAD_STOP = 1.0;
@@ -160,7 +279,7 @@
         }
 
         // ============================================================
-        // 4. ΧΑΡΤΗΣ
+        // 5. ΧΑΡΤΗΣ
         // ============================================================
         function initMap() {
             const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
@@ -183,7 +302,7 @@
         }
 
         // ============================================================
-        // 5. GPS
+        // 6. GPS
         // ============================================================
         function getGPS() {
             if (!navigator.geolocation) { setStatus('❌ GPS δεν υποστηρίζεται', 'red'); return; }
@@ -222,13 +341,13 @@
             setStatus('✅ Θέση λήφθηκε', 'green');
 
             // Αν έχουν φορτωθεί τριγωνομετρικά, εμφάνισε τα κοντινά
-            if (isTrigLoaded) {
+            if (trigMarkers.length > 0) {
                 showNearbyTrigPoints(lat, lon);
             }
         }
 
         // ============================================================
-        // 6. ΜΕΣΟΣ ΟΡΟΣ
+        // 7. ΜΕΣΟΣ ΟΡΟΣ
         // ============================================================
         function startAverage() {
             if (isAveraging) return;
@@ -362,7 +481,7 @@
         }
 
         // ============================================================
-        // 7. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
+        // 8. ΠΡΟΣΘΗΚΗ ΣΗΜΕΙΟΥ
         // ============================================================
         function addPoint() {
             if (!currentPos) { alert('Πάρε πρώτα GPS ή Μέσο Όρο!'); return; }
@@ -377,7 +496,7 @@
         }
 
         // ============================================================
-        // 8. ΣΧΕΔΙΑΣΗ ΠΟΛΥΓΩΝΟΥ & ΕΜΒΑΔΟ
+        // 9. ΣΧΕΔΙΑΣΗ ΠΟΛΥΓΩΝΟΥ & ΕΜΒΑΔΟ
         // ============================================================
         function drawPolygon() {
             const ll = polygonPoints.map(p => [p.lat, p.lon]);
@@ -400,7 +519,7 @@
         }
 
         // ============================================================
-        // 9. ΕΝΗΜΕΡΩΣΗ UI
+        // 10. ΕΝΗΜΕΡΩΣΗ UI
         // ============================================================
         function updateInfo(pos) {
             let altText = pos.alt !== null ? `${pos.alt} m` : 'N/A';
@@ -441,145 +560,99 @@
         }
 
         // ============================================================
-        // 10. ΦΟΡΤΩΣΗ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ ΣΗΜΕΙΩΝ (από το dataset)
+        // 11. ΦΟΡΤΩΣΗ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ (από το ενσωματωμένο array)
         // ============================================================
-        async function loadTrigPoints() {
+        function loadTrigPoints() {
             const btn = document.getElementById('refBtn');
             if (btn.disabled) return;
             btn.disabled = true;
             btn.textContent = '⏳ Φόρτωση...';
-            setStatus('⏳ Φόρτωση 25.258 τριγωνομετρικών σημείων...', 'orange');
+            setStatus('⏳ Φόρτωση ενσωματωμένων τριγωνομετρικών σημείων...', 'orange');
 
-            try {
-                // Φόρτωση του points.csv από το Zenodo
-                const url = 'https://zenodo.org/api/records/18863833/files/points.csv/content';
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Απέτυχε η λήψη του dataset');
-                const csvText = await response.text();
-
-                // Μετατροπή CSV σε array
-                const lines = csvText.replace(/^\uFEFF/, '').split('\n').filter(line => line.trim() !== '');
-                if (lines.length < 2) throw new Error('Το αρχείο είναι άδειο');
-
-                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-                const latIdx = headers.indexOf('lat');
-                const lonIdx = headers.indexOf('lon');
-                const nameIdx = headers.indexOf('name');
-                const idIdx = headers.indexOf('gys_id');
-                const elevIdx = headers.indexOf('elevation');
-                const orderIdx = headers.indexOf('order');
-                const xIdx = headers.indexOf('x');
-                const yIdx = headers.indexOf('y');
-
-                if (latIdx === -1 || lonIdx === -1) {
-                    throw new Error('Το CSV δεν έχει στήλες lat/lon');
-                }
-
-                trigPoints = [];
-                for (let i = 1; i < lines.length; i++) {
-                    const cols = lines[i].split(',').map(c => c.trim());
-                    if (cols.length < Math.max(latIdx, lonIdx) + 1) continue;
-                    const lat = parseFloat(cols[latIdx]);
-                    const lon = parseFloat(cols[lonIdx]);
-                    if (isNaN(lat) || isNaN(lon)) continue;
-                    const name = (nameIdx !== -1 && cols[nameIdx]) ? cols[nameIdx] : '';
-                    const gysId = (idIdx !== -1 && cols[idIdx]) ? cols[idIdx] : '';
-                    const elev = (elevIdx !== -1 && cols[elevIdx]) ? parseFloat(cols[elevIdx]) : null;
-                    const order = (orderIdx !== -1 && cols[orderIdx]) ? cols[orderIdx] : '';
-                    // Προσπάθεια ανάγνωσης X,Y αν υπάρχουν
-                    let x = null, y = null;
-                    if (xIdx !== -1 && yIdx !== -1 && cols[xIdx] && cols[yIdx]) {
-                        x = parseFloat(cols[xIdx]);
-                        y = parseFloat(cols[yIdx]);
-                    }
-                    trigPoints.push({
-                        lat, lon, name, gysId, elev, order,
-                        x: x || wgs84ToEGSA87(lat, lon).x,
-                        y: y || wgs84ToEGSA87(lat, lon).y
-                    });
-                }
-
-                isTrigLoaded = true;
-                setStatus(`✅ Φορτώθηκαν ${trigPoints.length} τριγωνομετρικά σημεία`, 'green');
-
-                // Αν έχουμε θέση, εμφάνισε τα κοντινά
-                if (currentPos) {
-                    showNearbyTrigPoints(currentPos.lat, currentPos.lon);
-                } else {
-                    // Αλλιώς εμφάνισε όλα (ή μπορούμε να ζητήσουμε GPS)
-                    setStatus('📍 Πάρε GPS για να δεις τα πλησιέστερα σημεία', 'orange');
-                }
-
-                btn.textContent = '📍 Τριγωνομετρικά';
-                btn.disabled = false;
-
-            } catch (error) {
-                console.error(error);
-                setStatus('❌ Σφάλμα φόρτωσης τριγωνομετρικών', 'red');
-                alert('Απέτυχε η φόρτωση των τριγωνομετρικών σημείων. Ελέγξτε τη σύνδεσή σας στο διαδίκτυο.');
-                btn.textContent = '📍 Τριγωνομετρικά';
-                btn.disabled = false;
-            }
-        }
-
-        // ============================================================
-        // 11. ΕΜΦΑΝΙΣΗ ΚΟΝΤΙΝΩΝ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ
-        // ============================================================
-        function showNearbyTrigPoints(lat, lon, radiusKm = 5) {
-            // Αφαίρεση παλαιών markers
+            // Καθαρισμός παλαιών markers
             trigMarkers.forEach(m => map.removeLayer(m));
             trigMarkers = [];
 
-            if (!isTrigLoaded || trigPoints.length === 0) {
+            // Βρίσκουμε το κέντρο του χάρτη
+            const center = map.getBounds().getCenter();
+
+            // Φιλτράρουμε τα σημεία σε ακτίνα 0.7 μοιρών (~70km) από το κέντρο
+            const radiusDeg = 0.7;
+            let count = 0;
+
+            TRIG_POINTS.forEach(p => {
+                const dLat = p.lat - center.lat;
+                const dLon = p.lon - center.lng;
+                if (Math.abs(dLat) > radiusDeg || Math.abs(dLon) > radiusDeg) return;
+
+                const eg = wgs84ToEGSA87(p.lat, p.lon);
+                const popupContent = `
+                    <b>📍 ${p.name}</b><br>
+                    <b>Κωδικός ΓΥΣ:</b> ${p.gysId || 'N/A'}<br>
+                    <b>Υψόμετρο:</b> ${p.elev || 'N/A'} m<br>
+                    <b>Τάξη:</b> ${p.order || 'N/A'}<br>
+                    <b>ΕΓΣΑ87:</b> X=${eg.x}m, Y=${eg.y}m<br>
+                    <b>WGS84:</b> ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}
+                    <br><br>
+                    <button onclick="useAsReference(${p.lat}, ${p.lon}, '${p.name.replace(/'/g, "\\'")}')" 
+                            style="background:#00bcd4;color:white;border:none;padding:4px 12px;border-radius:20px;cursor:pointer;font-weight:bold;">
+                        ✅ Χρήση ως Σημείο Αναφοράς
+                    </button>
+                `;
+
+                const marker = L.marker([p.lat, p.lon], {
+                    icon: L.divIcon({
+                        html: '📍',
+                        className: 'ref-marker',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(map)
+                  .bindPopup(popupContent);
+
+                trigMarkers.push(marker);
+                count++;
+            });
+
+            // Αν έχουμε θέση, εμφάνισε τα πλησιέστερα
+            if (currentPos) {
+                showNearbyTrigPoints(currentPos.lat, currentPos.lon);
+            }
+
+            setStatus(`✅ Φορτώθηκαν ${count} τριγωνομετρικά σημεία στην περιοχή σας`, 'green');
+            btn.textContent = '📍 Τριγωνομετρικά';
+            btn.disabled = false;
+        }
+
+        // ============================================================
+        // 12. ΕΜΦΑΝΙΣΗ ΚΟΝΤΙΝΩΝ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ
+        // ============================================================
+        function showNearbyTrigPoints(lat, lon, radiusKm = 5) {
+            if (trigMarkers.length === 0) {
                 setStatus('⚠️ Φόρτωσε πρώτα τα τριγωνομετρικά σημεία', 'orange');
                 return;
             }
 
-            const radiusM = radiusKm * 1000;
             let found = 0;
-
-            trigPoints.forEach(p => {
-                const dist = haversineDistance(lat, lon, p.lat, p.lon);
-                if (dist <= radiusM) {
+            trigMarkers.forEach(m => {
+                const latlng = m.getLatLng();
+                const dist = haversineDistance(lat, lon, latlng.lat, latlng.lng);
+                if (dist <= radiusKm * 1000) {
                     found++;
-                    // Δημιουργία popup με όλες τις πληροφορίες
-                    const popupContent = `
-                        <b>📍 ${p.name || 'Τριγωνομετρικό'}</b><br>
-                        <b>Κωδικός ΓΥΣ:</b> ${p.gysId || 'N/A'}<br>
-                        <b>Υψόμετρο:</b> ${p.elev !== null ? p.elev + ' m' : 'N/A'}<br>
-                        <b>Τάξη:</b> ${p.order || 'N/A'}<br>
-                        <b>ΕΓΣΑ87:</b> X=${Math.round(p.x)}m, Y=${Math.round(p.y)}m<br>
-                        <b>WGS84:</b> ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}<br>
-                        <b>Απόσταση:</b> ${dist.toFixed(1)} m
-                        <br><br>
-                        <button onclick="useAsReference(${p.lat}, ${p.lon}, '${p.name || p.gysId || 'Σημείο'}')" 
-                                style="background:#00bcd4;color:white;border:none;padding:4px 12px;border-radius:20px;cursor:pointer;font-weight:bold;">
-                            ✅ Χρήση ως Σημείο Αναφοράς
-                        </button>
-                    `;
-
-                    const marker = L.marker([p.lat, p.lon], {
-                        icon: L.divIcon({
-                            html: '📍',
-                            className: 'ref-marker',
-                            iconSize: [20, 20]
-                        })
-                    }).addTo(map)
-                      .bindPopup(popupContent);
-
-                    trigMarkers.push(marker);
+                    m.bindPopup(m.getPopup().getContent() + `<br><b>Απόσταση:</b> ${dist.toFixed(1)} m`).openPopup();
+                } else {
+                    m.closePopup();
                 }
             });
 
             if (found === 0) {
-                setStatus(`ℹ️ Δεν βρέθηκαν τριγωνομετρικά σημεία σε ακτίνα ${radiusKm} χλμ`, 'orange');
+                setStatus(`ℹ️ Δεν βρέθηκαν τριγωνομετρικά σε ακτίνα ${radiusKm} χλμ`, 'orange');
             } else {
-                setStatus(`✅ Βρέθηκαν ${found} τριγωνομετρικά σημεία σε ακτίνα ${radiusKm} χλμ`, 'green');
+                setStatus(`✅ ${found} τριγωνομετρικά σε ακτίνα ${radiusKm} χλμ`, 'green');
             }
         }
 
         // ============================================================
-        // 12. ΧΡΗΣΗ ΣΗΜΕΙΟΥ ΩΣ ΑΝΑΦΟΡΑΣ
+        // 13. ΧΡΗΣΗ ΣΗΜΕΙΟΥ ΩΣ ΑΝΑΦΟΡΑΣ
         // ============================================================
         function useAsReference(lat, lon, name) {
             const eg = wgs84ToEGSA87(lat, lon);
@@ -610,7 +683,7 @@
         }
 
         // ============================================================
-        // 13. ΦΟΡΤΩΣΗ CUSTOM CSV
+        // 14. ΦΟΡΤΩΣΗ CUSTOM CSV
         // ============================================================
         function loadCustomRefPoints(event) {
             const file = event.target.files[0];
@@ -675,13 +748,11 @@
         }
 
         // ============================================================
-        // 14. ΕΞΑΓΩΓΕΣ (DXF, KMZ, CSV)
+        // 15. ΕΞΑΓΩΓΕΣ
         // ============================================================
         function exportDXF() {
             if (polygonPoints.length === 0) { alert('Δεν υπάρχουν σημεία!'); return; }
-
             let dxf = `0\nSECTION\n2\nENTITIES\n`;
-
             polygonPoints.forEach((p, i) => {
                 const code = p.code || `P${i+1}`;
                 const z = (p.alt !== null) ? p.alt : 0;
@@ -690,12 +761,10 @@
                 dxf += `0\nTEXT\n8\n0\n10\n2.5\n20\n-1.5\n30\n0\n40\n1.0\n1\n${code}\n`;
                 dxf += `0\nENDBLK\n`;
             });
-
             polygonPoints.forEach((p, i) => {
                 const z = (p.alt !== null) ? p.alt : 0;
                 dxf += `0\nINSERT\n8\n0\n2\nPT${i+1}\n10\n${p.x}\n20\n${p.y}\n30\n${z}\n`;
             });
-
             if (polygonPoints.length >= 3) {
                 dxf += `0\nLWPOLYLINE\n8\n0\n90\n${polygonPoints.length}\n70\n1\n`;
                 polygonPoints.forEach(p => {
@@ -703,9 +772,7 @@
                     dxf += `10\n${p.x}\n20\n${p.y}\n38\n${z}\n`;
                 });
             }
-
             dxf += `0\nENDSEC\n0\nEOF\n`;
-
             const blob = new Blob([dxf], { type: 'application/dxf' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -792,7 +859,7 @@
         }
 
         // ============================================================
-        // 15. ΚΑΘΑΡΙΣΜΟΣ
+        // 16. ΚΑΘΑΡΙΣΜΟΣ
         // ============================================================
         function clearAll() {
             if (polygonPoints.length > 0 && !confirm('Σβήσιμο όλων των σημείων;')) return;
@@ -812,10 +879,10 @@
             if (polyline) map.removeLayer(polyline);
             if (polygonLayer) map.removeLayer(polygonLayer);
             marker = polyline = polygonLayer = null;
-            refMarkers.forEach(m => map.removeLayer(m));
-            refMarkers = [];
             trigMarkers.forEach(m => map.removeLayer(m));
             trigMarkers = [];
+            refMarkers.forEach(m => map.removeLayer(m));
+            refMarkers = [];
             customRefPoints = [];
             if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             isAveraging = false;
@@ -827,7 +894,7 @@
         }
 
         // ============================================================
-        // 16. ΕΚΚΙΝΗΣΗ
+        // 17. ΕΚΚΙΝΗΣΗ
         // ============================================================
         window.onload = initMap;
     </script>
