@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -56,7 +55,7 @@
         <button class="btn-gps" onclick="getGPS()">📍 GPS</button>
         <button class="btn-avg" onclick="startAverage()" id="avgBtn">📊 Μ.Ο.</button>
         <button class="btn-add" onclick="addPoint()" id="addBtn" disabled>➕ Προσθ.</button>
-        <button class="btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn">📍 Φόρτωση Τριγωνομετρικών</button>
+        <button class="btn-ref" onclick="loadTrigPointsFromGitHub()" id="refBtn">📍 Τριγωνομετρικά</button>
         <button class="btn-upload" onclick="document.getElementById('csvUpload').click()">📤 Φόρτωση CSV</button>
         <input type="file" id="csvUpload" accept=".csv" style="display:none" onchange="loadCustomRefPoints(event)">
         <button class="btn-dxf" onclick="exportDXF()">💾 DXF</button>
@@ -233,7 +232,7 @@
         }
 
         // ============================================================
-        // 6. ΜΕΣΟΣ ΟΡΟΣ (πανομοιότυπος με πριν)
+        // 6. ΜΕΣΟΣ ΟΡΟΣ
         // ============================================================
         function startAverage() {
             if (isAveraging) return;
@@ -446,10 +445,10 @@
         }
 
         // ============================================================
-        // 10. ΦΟΡΤΩΣΗ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ ΑΠΟ GITHUB
+        // 10. ΦΟΡΤΩΣΗ ΤΡΙΓΩΝΟΜΕΤΡΙΚΩΝ ΑΠΟ GITHUB (ΔΙΟΡΘΩΜΕΝΟ URL)
         // ============================================================
-        // ⚠️ ΑΛΛΑΞΕ ΤΟ URL ΜΕ ΤΟ ΔΙΚΟ ΣΟΥ!
-        const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/btantos-art/GreekGridGPS/main/points.csv';
+        // ✅ ΣΩΣΤΟ URL ΓΙΑ ΤΟ REPOSITORY ΣΟΥ
+        const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/btantos-art/gps-app/main/points.csv';
 
         async function loadTrigPointsFromGitHub() {
             const btn = document.getElementById('refBtn');
@@ -459,17 +458,18 @@
             setStatus('⏳ Φόρτωση τριγωνομετρικών σημείων από GitHub...', 'orange');
 
             try {
-                // Δοκιμή φόρτωσης από το URL
+                // Δοκιμή φόρτωσης από το σωστό URL
                 const response = await fetch(GITHUB_CSV_URL);
                 if (!response.ok) {
-                    // Αν αποτύχει, εμφάνιση αναλυτικού μηνύματος
                     let errorMsg = `Απέτυχε η φόρτωση (HTTP ${response.status}).\n`;
+                    errorMsg += `Δοκίμασα το URL:\n${GITHUB_CSV_URL}\n\n`;
                     if (response.status === 404) {
-                        errorMsg += 'Το αρχείο points.csv δεν βρέθηκε στο repository σου.\n';
-                        errorMsg += 'Βεβαιώσου ότι:\n';
-                        errorMsg += '1. Το αρχείο υπάρχει και το όνομά του είναι points.csv\n';
-                        errorMsg += '2. Το ανέβασες στον σωστό φάκελο\n';
-                        errorMsg += '3. Το repository είναι δημόσιο (Public)';
+                        errorMsg += 'Το αρχείο points.csv δεν βρέθηκε.\n';
+                        errorMsg += 'Έλεγξε:\n';
+                        errorMsg += '1. Το όνομα του repository είναι gps-app (όχι GreekGridGPS)\n';
+                        errorMsg += '2. Το αρχείο βρίσκεται στον root φάκελο (όχι μέσα σε φάκελο)\n';
+                        errorMsg += '3. Το branch είναι main (όχι master)\n\n';
+                        errorMsg += '🔧 Γρήγορη λύση: Χρησιμοποίησε το κουμπί "📤 Φόρτωση CSV" για να φορτώσεις το αρχείο τοπικά.';
                     } else if (response.status === 403) {
                         errorMsg += 'Το repository είναι πιθανώς ιδιωτικό (Private).\n';
                         errorMsg += 'Άλλαξε το σε Public ή φόρτωσε το CSV τοπικά.';
@@ -484,8 +484,6 @@
                 }
 
                 const csvText = await response.text();
-
-                // Μετατροπή CSV σε array
                 const lines = csvText.replace(/^\uFEFF/, '').split('\n').filter(line => line.trim() !== '');
                 if (lines.length < 2) throw new Error('Το αρχείο είναι άδειο');
 
@@ -528,7 +526,6 @@
 
                 isTrigLoaded = true;
                 setStatus(`✅ Φορτώθηκαν ${allTrigPoints.length} τριγωνομετρικά σημεία`, 'green');
-
                 updateVisibleTrigPoints();
 
                 btn.textContent = '📍 Τριγωνομετρικά';
@@ -544,7 +541,7 @@
         }
 
         // ============================================================
-        // 11. ΔΥΝΑΜΙΚΗ ΕΜΦΑΝΙΣΗ ΣΗΜΕΙΩΝ ΑΝΑΛΟΓΑ ΜΕ ΤΟ ZOOM
+        // 11. ΔΥΝΑΜΙΚΗ ΕΜΦΑΝΙΣΗ ΣΗΜΕΙΩΝ
         // ============================================================
         function updateVisibleTrigPoints() {
             if (!isTrigLoaded || allTrigPoints.length === 0) return;
@@ -701,10 +698,8 @@
 
                     if (newPoints.length === 0) { alert('Δεν βρέθηκαν έγκυρα σημεία στο CSV'); return; }
 
-                    // Προσθήκη custom σημείων στον allTrigPoints
                     customRefPoints = newPoints;
                     customRefPoints.forEach(p => {
-                        // Δημιουργία μόνιμου σημείου
                         const eg = wgs84ToEGSA87(p.lat, p.lon);
                         allTrigPoints.push({
                             lat: p.lat,
@@ -716,7 +711,6 @@
                             x: eg.x,
                             y: eg.y
                         });
-                        // Εμφάνιση στον χάρτη
                         const popupContent = `
                             <b>📍 ${p.name || 'Custom'}</b><br>
                             <b>Υψόμετρο:</b> ${p.elev || 'N/A'} m<br>
@@ -884,7 +878,7 @@
             avgReadings = [];
             document.getElementById('avgBtn').disabled = false;
             document.getElementById('progress-bar').style.display = 'none';
-            document.getElementById('refBtn').textContent = '📍 Φόρτωση Τριγωνομετρικών';
+            document.getElementById('refBtn').textContent = '📍 Τριγωνομετρικά';
             document.getElementById('refBtn').disabled = false;
         }
 
